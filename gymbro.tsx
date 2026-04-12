@@ -92,9 +92,124 @@ const DB = [
   {id:80,name:"Kettlebell Goblet Squat",muscle:"Quads",eq:"Kettlebell",type:"Compound"},
   {id:81,name:"Kettlebell Press",muscle:"Shoulders",eq:"Kettlebell",type:"Compound"},
   {id:82,name:"Turkish Get-Up",muscle:"Core",eq:"Kettlebell",type:"Compound"},
+  {id:83,name:"Kettlebell Clean",muscle:"Glutes",eq:"Kettlebell",type:"Compound"},
+  {id:84,name:"Kettlebell Snatch",muscle:"Shoulders",eq:"Kettlebell",type:"Compound"},
+  {id:85,name:"Kettlebell Windmill",muscle:"Core",eq:"Kettlebell",type:"Compound"},
+  {id:86,name:"Kettlebell Deadlift",muscle:"Back",eq:"Kettlebell",type:"Compound"},
+  {id:87,name:"Kettlebell Halo",muscle:"Shoulders",eq:"Kettlebell",type:"Compound"},
+  {id:88,name:"Kettlebell Around the World",muscle:"Core",eq:"Kettlebell",type:"Isolation"},
+  {id:89,name:"Single Arm Kettlebell Row",muscle:"Back",eq:"Kettlebell",type:"Compound"},
+  // Rings
+  {id:90,name:"Ring Dip",muscle:"Triceps",eq:"Rings",type:"Compound"},
+  {id:91,name:"Ring Push-Up",muscle:"Chest",eq:"Rings",type:"Compound"},
+  {id:92,name:"Ring Row",muscle:"Back",eq:"Rings",type:"Compound"},
+  {id:93,name:"Ring Pull-Up",muscle:"Back",eq:"Rings",type:"Compound"},
+  {id:94,name:"Ring Muscle-Up",muscle:"Back",eq:"Rings",type:"Compound"},
+  {id:95,name:"Ring L-Sit",muscle:"Core",eq:"Rings",type:"Isometric"},
+  {id:96,name:"Ring Chest Fly",muscle:"Chest",eq:"Rings",type:"Isolation"},
+  {id:97,name:"Ring Face Pull",muscle:"Shoulders",eq:"Rings",type:"Isolation"},
+  {id:98,name:"Ring Pike Push-Up",muscle:"Shoulders",eq:"Rings",type:"Compound"},
+  {id:99,name:"Ring Archer Push-Up",muscle:"Chest",eq:"Rings",type:"Compound"},
+  {id:100,name:"Ring Bicep Curl",muscle:"Biceps",eq:"Rings",type:"Isolation"},
+  {id:101,name:"Ring Tricep Extension",muscle:"Triceps",eq:"Rings",type:"Isolation"},
+  {id:102,name:"Ring Rear Delt Row",muscle:"Shoulders",eq:"Rings",type:"Isolation"},
+  {id:103,name:"Ring Body Saw",muscle:"Core",eq:"Rings",type:"Compound"},
+  {id:104,name:"Ring Bulgarian Split Squat",muscle:"Quads",eq:"Rings",type:"Compound"},
+  // More Barbell
+  {id:105,name:"Pause Squat",muscle:"Quads",eq:"Barbell",type:"Compound"},
+  {id:106,name:"Box Squat",muscle:"Quads",eq:"Barbell",type:"Compound"},
+  {id:107,name:"Barbell Hack Squat",muscle:"Quads",eq:"Barbell",type:"Compound"},
+  {id:108,name:"Barbell Bulgarian Split Squat",muscle:"Quads",eq:"Barbell",type:"Compound"},
+  {id:109,name:"Push Press",muscle:"Shoulders",eq:"Barbell",type:"Compound"},
+  {id:110,name:"Bradford Press",muscle:"Shoulders",eq:"Barbell",type:"Compound"},
+  {id:111,name:"Seated Good Morning",muscle:"Hamstrings",eq:"Barbell",type:"Compound"},
+  {id:112,name:"Barbell Wrist Curl",muscle:"Forearms",eq:"Barbell",type:"Isolation"},
+  {id:113,name:"Barbell Reverse Curl",muscle:"Forearms",eq:"Barbell",type:"Isolation"},
+  {id:114,name:"Barbell Step-Up",muscle:"Quads",eq:"Barbell",type:"Compound"},
+  {id:115,name:"Barbell Drag Curl",muscle:"Biceps",eq:"Barbell",type:"Isolation"},
+  {id:116,name:"Floor Press",muscle:"Chest",eq:"Barbell",type:"Compound"},
+  // More Dumbbell
+  {id:117,name:"Arnold Press",muscle:"Shoulders",eq:"Dumbbell",type:"Compound"},
+  {id:118,name:"Dumbbell Pullover",muscle:"Chest",eq:"Dumbbell",type:"Compound"},
+  {id:119,name:"Dumbbell Bulgarian Split Squat",muscle:"Quads",eq:"Dumbbell",type:"Compound"},
+  {id:120,name:"Dumbbell Step-Up",muscle:"Quads",eq:"Dumbbell",type:"Compound"},
+  {id:121,name:"Dumbbell Chest Supported Row",muscle:"Back",eq:"Dumbbell",type:"Compound"},
+  {id:122,name:"Zottman Curl",muscle:"Biceps",eq:"Dumbbell",type:"Isolation"},
+  {id:123,name:"Spider Curl",muscle:"Biceps",eq:"Dumbbell",type:"Isolation"},
+  {id:124,name:"Concentration Curl",muscle:"Biceps",eq:"Dumbbell",type:"Isolation"},
+  {id:125,name:"Waiter Curl",muscle:"Biceps",eq:"Dumbbell",type:"Isolation"},
+  {id:126,name:"Dumbbell Prone Reverse Fly",muscle:"Shoulders",eq:"Dumbbell",type:"Isolation"},
+  {id:127,name:"Dumbbell Floor Press",muscle:"Chest",eq:"Dumbbell",type:"Compound"},
+  {id:128,name:"Dumbbell Romanian Split Deadlift",muscle:"Hamstrings",eq:"Dumbbell",type:"Compound"},
+  {id:129,name:"Dumbbell Wrist Curl",muscle:"Forearms",eq:"Dumbbell",type:"Isolation"},
+  {id:130,name:"Dumbbell Tate Press",muscle:"Triceps",eq:"Dumbbell",type:"Isolation"},
+  // More Cable
+  {id:131,name:"Cable Woodchop",muscle:"Core",eq:"Cable",type:"Compound"},
+  {id:132,name:"Cable Pallof Press",muscle:"Core",eq:"Cable",type:"Isometric"},
+  {id:133,name:"Cable Pull-Through",muscle:"Glutes",eq:"Cable",type:"Compound"},
+  {id:134,name:"Cable Overhead Tricep Extension",muscle:"Triceps",eq:"Cable",type:"Isolation"},
+  {id:135,name:"Cable Hammer Curl",muscle:"Biceps",eq:"Cable",type:"Isolation"},
+  {id:136,name:"Single Arm Cable Row",muscle:"Back",eq:"Cable",type:"Compound"},
+  {id:137,name:"Cable Rear Delt Row",muscle:"Shoulders",eq:"Cable",type:"Isolation"},
+  {id:138,name:"Cable Hip Flexion",muscle:"Core",eq:"Cable",type:"Isolation"},
+  {id:139,name:"Cable Straight Arm Pulldown",muscle:"Back",eq:"Cable",type:"Isolation"},
+  {id:140,name:"Cable Reverse Fly",muscle:"Shoulders",eq:"Cable",type:"Isolation"},
+  {id:141,name:"Cable Upright Row",muscle:"Shoulders",eq:"Cable",type:"Compound"},
+  {id:142,name:"Cable Shrug",muscle:"Traps",eq:"Cable",type:"Isolation"},
+  // More Machine
+  {id:143,name:"Hack Squat Machine",muscle:"Quads",eq:"Machine",type:"Compound"},
+  {id:144,name:"Pendulum Squat",muscle:"Quads",eq:"Machine",type:"Compound"},
+  {id:145,name:"T-Bar Row",muscle:"Back",eq:"Machine",type:"Compound"},
+  {id:146,name:"Chest Supported Row Machine",muscle:"Back",eq:"Machine",type:"Compound"},
+  {id:147,name:"Preacher Curl Machine",muscle:"Biceps",eq:"Machine",type:"Isolation"},
+  {id:148,name:"Tricep Dip Machine",muscle:"Triceps",eq:"Machine",type:"Isolation"},
+  {id:149,name:"Glute Kickback Machine",muscle:"Glutes",eq:"Machine",type:"Isolation"},
+  {id:150,name:"Lying Leg Curl",muscle:"Hamstrings",eq:"Machine",type:"Isolation"},
+  {id:151,name:"Standing Leg Curl",muscle:"Hamstrings",eq:"Machine",type:"Isolation"},
+  {id:152,name:"Hip Abduction Machine",muscle:"Abductors",eq:"Machine",type:"Isolation"},
+  {id:153,name:"Standing Calf Raise Machine",muscle:"Calves",eq:"Machine",type:"Isolation"},
+  {id:154,name:"Neck Machine",muscle:"Neck",eq:"Machine",type:"Isolation"},
+  // More Bodyweight
+  {id:155,name:"Muscle-Up",muscle:"Back",eq:"Bodyweight",type:"Compound"},
+  {id:156,name:"L-Sit",muscle:"Core",eq:"Bodyweight",type:"Isometric"},
+  {id:157,name:"Dragon Flag",muscle:"Core",eq:"Bodyweight",type:"Compound"},
+  {id:158,name:"Front Lever",muscle:"Back",eq:"Bodyweight",type:"Isometric"},
+  {id:159,name:"Back Lever",muscle:"Chest",eq:"Bodyweight",type:"Isometric"},
+  {id:160,name:"Pike Push-Up",muscle:"Shoulders",eq:"Bodyweight",type:"Compound"},
+  {id:161,name:"Diamond Push-Up",muscle:"Triceps",eq:"Bodyweight",type:"Compound"},
+  {id:162,name:"Wide Push-Up",muscle:"Chest",eq:"Bodyweight",type:"Compound"},
+  {id:163,name:"Archer Push-Up",muscle:"Chest",eq:"Bodyweight",type:"Compound"},
+  {id:164,name:"Decline Push-Up",muscle:"Chest",eq:"Bodyweight",type:"Compound"},
+  {id:165,name:"Bulgarian Split Squat",muscle:"Quads",eq:"Bodyweight",type:"Compound"},
+  {id:166,name:"Box Jump",muscle:"Quads",eq:"Bodyweight",type:"Compound"},
+  {id:167,name:"Jump Squat",muscle:"Quads",eq:"Bodyweight",type:"Compound"},
+  {id:168,name:"Jumping Lunge",muscle:"Quads",eq:"Bodyweight",type:"Compound"},
+  {id:169,name:"Wall Sit",muscle:"Quads",eq:"Bodyweight",type:"Isometric"},
+  {id:170,name:"Reverse Crunch",muscle:"Core",eq:"Bodyweight",type:"Isolation"},
+  {id:171,name:"V-Up",muscle:"Core",eq:"Bodyweight",type:"Isolation"},
+  {id:172,name:"Russian Twist",muscle:"Core",eq:"Bodyweight",type:"Isolation"},
+  {id:173,name:"Lying Leg Raise",muscle:"Core",eq:"Bodyweight",type:"Isolation"},
+  {id:174,name:"Toes to Bar",muscle:"Core",eq:"Bodyweight",type:"Isolation"},
+  {id:175,name:"Hollow Body Hold",muscle:"Core",eq:"Bodyweight",type:"Isometric"},
+  {id:176,name:"Superman Hold",muscle:"Back",eq:"Bodyweight",type:"Isometric"},
+  {id:177,name:"Bodyweight Calf Raise",muscle:"Calves",eq:"Bodyweight",type:"Isolation"},
+  {id:178,name:"Step-Up",muscle:"Quads",eq:"Bodyweight",type:"Compound"},
+  {id:179,name:"Sissy Squat",muscle:"Quads",eq:"Bodyweight",type:"Isolation"},
+  // Bands
+  {id:180,name:"Band Pull Apart",muscle:"Shoulders",eq:"Bands",type:"Isolation"},
+  {id:181,name:"Band Face Pull",muscle:"Shoulders",eq:"Bands",type:"Isolation"},
+  {id:182,name:"Band Lateral Walk",muscle:"Glutes",eq:"Bands",type:"Isolation"},
+  {id:183,name:"Band Tricep Pushdown",muscle:"Triceps",eq:"Bands",type:"Isolation"},
+  {id:184,name:"Band Bicep Curl",muscle:"Biceps",eq:"Bands",type:"Isolation"},
+  {id:185,name:"Band Squat",muscle:"Quads",eq:"Bands",type:"Compound"},
+  {id:186,name:"Band Hip Thrust",muscle:"Glutes",eq:"Bands",type:"Compound"},
+  {id:187,name:"Band Good Morning",muscle:"Hamstrings",eq:"Bands",type:"Compound"},
+  {id:188,name:"Band Overhead Press",muscle:"Shoulders",eq:"Bands",type:"Compound"},
+  {id:189,name:"Band Row",muscle:"Back",eq:"Bands",type:"Compound"},
+  {id:190,name:"Band Clamshell",muscle:"Glutes",eq:"Bands",type:"Isolation"},
 ];
 
-const EQ_TYPES = ["All", "Barbell", "EZ Bar", "Smith Machine", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell"];
+const EQ_TYPES = ["All", "Barbell", "EZ Bar", "Smith Machine", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell", "Rings", "Bands"];
 const MUSCLES = ["All", ...new Set(DB.map(e => e.muscle)).values()];
 
 // Bar weights in lbs
@@ -297,6 +412,17 @@ const THEMES: Record<string,{name:string,emoji:string,[k:string]:string}> = {
     "--color-border-tertiary":      "#1a3208",
     "--color-accent":               "#d4a820",
   },
+  wow: {
+    name:"World of Warcraft", emoji:"⚔️",
+    "--color-body-bg":              "#060810",
+    "--color-background-primary":   "#0a0e1a",
+    "--color-background-secondary": "#10182a",
+    "--color-text-primary":         "#f0c060",
+    "--color-text-secondary":       "#8090c0",
+    "--color-border-secondary":     "#2a3870",
+    "--color-border-tertiary":      "#1a2450",
+    "--color-accent":               "#c89030",
+  },
   daylight: {
     name:"Daylight", emoji:"☀️",
     "--color-body-bg":              "#eeeeee",
@@ -367,11 +493,6 @@ export default function GymBro() {
   const [routineForm, setRoutineForm] = useState({name:"",exercises:[]});
   const [routineExSearch, setRoutineExSearch] = useState("");
 
-  // AI state
-  const [aiGoal, setAiGoal] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState(null);
-  const [aiErr, setAiErr] = useState("");
   const [theme, setTheme] = useState("matrix");
 
   // ── DB FILTER (must be before early return — Rules of Hooks) ──
@@ -475,36 +596,6 @@ export default function GymBro() {
     setRoutines(prev=>({...prev,[uid]:prev[uid].filter(r=>r.id!==id)}));
   }
 
-  // ── AI PLAN ──
-  async function generatePlan() {
-    if (!aiGoal.trim()) return;
-    setAiLoading(true); setAiErr(""); setAiResult(null);
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:1000,
-          messages:[{role:"user",content:`You are a gym programming expert. The user says: "${aiGoal}". Create a resistance training routine. Respond ONLY with valid JSON (no markdown, no backticks) in this exact format: {"name":"Routine Name","exercises":[{"name":"Exercise Name","sets":3,"reps":"8","weight":"135"}]}. Use exercise names that exactly match this list where possible: ${DB.map(e=>e.name).join(", ")}. Use lbs for weight. 4-7 exercises.`}]
-        })
-      });
-      const data = await res.json();
-      const text = data.content?.map(c=>c.text||"").join("") || "";
-      const clean = text.replace(/```json|```/g,"").trim();
-      const parsed = JSON.parse(clean);
-      setAiResult(parsed);
-    } catch(e) { setAiErr("Could not generate plan. Try again."); }
-    setAiLoading(false);
-  }
-
-  function importAIPlan() {
-    if (!aiResult) return;
-    setRoutines(prev=>({...prev,[uid]:[...(prev[uid]||[]),{...aiResult,id:"ai"+Date.now()}]}));
-    setAiResult(null); setAiGoal("");
-    setTab("routines");
-  }
-
   // ── CALC ──
   const bar = BARS[barIdx];
   const plates = unit==="lbs" ? PLATES_LBS : PLATES_KG;
@@ -530,7 +621,7 @@ export default function GymBro() {
       </div>
 
       <div style={S.tabs}>
-        {[["dashboard","Dashboard"],["log","Log"],["progress","Progress"],["routines","Routines"],["calc","Calculator"],["db","Exercises"],["ai","AI Plan"]].map(([id,lbl])=>(
+        {[["dashboard","Dashboard"],["log","Log"],["progress","Progress"],["routines","Routines"],["calc","Calculator"],["db","Exercises"]].map(([id,lbl])=>(
           <button key={id} style={S.tabBtn(tab===id)} onClick={()=>setTab(id)}>{lbl}</button>
         ))}
       </div>
@@ -629,11 +720,11 @@ export default function GymBro() {
                     {ex.sets.map((set,si)=>(
                       <div key={si} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
                         <span style={{fontSize:12,color:"var(--color-text-secondary)",minWidth:36}}>Set {si+1}</span>
-                        <input type="number" value={set.w} placeholder="lbs" style={S.sm} onChange={e=>{
+                        <input type="text" inputMode="decimal" value={set.w} placeholder="lbs" style={S.sm} onChange={e=>{
                           setActiveSession(prev=>{const exs=[...prev.exercises];exs[ei]={...exs[ei],sets:exs[ei].sets.map((s,j)=>j===si?{...s,w:e.target.value}:s)};return {...prev,exercises:exs};});
                         }}/>
                         <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>×</span>
-                        <input type="number" value={set.r} placeholder="reps" style={S.sm} onChange={e=>{
+                        <input type="text" inputMode="numeric" value={set.r} placeholder="reps" style={S.sm} onChange={e=>{
                           setActiveSession(prev=>{const exs=[...prev.exercises];exs[ei]={...exs[ei],sets:exs[ei].sets.map((s,j)=>j===si?{...s,r:e.target.value}:s)};return {...prev,exercises:exs};});
                         }}/>
                         <button style={{...S.btn,padding:"4px 8px",fontSize:11,color:"#A32D2D"}} onClick={()=>{
@@ -772,8 +863,10 @@ export default function GymBro() {
           </div>
           <div style={S.label}>Target weight ({unit})</div>
           <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
-            <input type="range" min={barW} max={unit==="lbs"?500:225} step={unit==="lbs"?2.5:1.25} value={targetW} onChange={e=>setTargetW(Number(e.target.value))} style={{flex:1}}/>
-            <input type="number" value={targetW} style={{...S.sm,width:72}} onChange={e=>setTargetW(Number(e.target.value))}/>
+            <input type="range" min={barW} max={unit==="lbs"?500:225} step={unit==="lbs"?5:2.5} value={targetW} onChange={e=>setTargetW(Number(e.target.value))} style={{flex:1}}/>
+            <button style={S.btn} onClick={()=>setTargetW(prev=>Math.max(barW,prev-(unit==="lbs"?5:2.5)))}>-5</button>
+            <input type="text" inputMode="decimal" value={targetW} style={{...S.sm,width:64,textAlign:"center"}} onChange={e=>{const v=parseFloat(e.target.value);if(!isNaN(v))setTargetW(Math.max(barW,v));}}/>
+            <button style={S.btn} onClick={()=>setTargetW(prev=>prev+(unit==="lbs"?5:2.5))}>+5</button>
           </div>
           <div style={S.card}>
             <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:10}}>Bar: {barW} {unit}  ·  Each side:</div>
@@ -823,35 +916,6 @@ export default function GymBro() {
         </div>
       )}
 
-      {/* ── AI PLAN ── */}
-      {tab==="ai" && (
-        <div>
-          <div style={{...S.cardSec,marginBottom:12}}>
-            <div style={{fontSize:13,color:"var(--color-text-secondary)"}}>Describe your goal and I'll build a routine and save it directly to your Gym Bro.</div>
-          </div>
-          <div style={S.label}>Your goal</div>
-          <textarea value={aiGoal} onChange={e=>setAiGoal(e.target.value)} rows={3} placeholder="e.g. I want to build a 3-day upper/lower split focused on hypertrophy, I'm intermediate level..." style={{...S.input,resize:"vertical"}}/>
-          <button style={{...S.btnPrimary,marginTop:8,width:"100%"}} onClick={generatePlan} disabled={aiLoading}>
-            {aiLoading?"Generating...":"Generate routine ↗"}
-          </button>
-          {aiErr && <div style={{color:"#A32D2D",fontSize:13,marginTop:8}}>{aiErr}</div>}
-          {aiResult && (
-            <div style={{...S.card,marginTop:12}}>
-              <div style={{fontSize:15,fontWeight:500,marginBottom:8}}>{aiResult.name}</div>
-              {aiResult.exercises?.map((e,i)=>(
-                <div key={i} style={{fontSize:13,display:"flex",justifyContent:"space-between",marginBottom:4,color:"var(--color-text-secondary)"}}>
-                  <span style={{color:"var(--color-text-primary)"}}>{e.name}</span>
-                  <span>{e.sets} × {e.reps} @ {e.weight} lbs</span>
-                </div>
-              ))}
-              <div style={{display:"flex",gap:8,marginTop:12}}>
-                <button style={S.btnPrimary} onClick={importAIPlan}>Save to my routines</button>
-                <button style={S.btn} onClick={()=>setAiResult(null)}>Discard</button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
