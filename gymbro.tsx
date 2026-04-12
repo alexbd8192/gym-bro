@@ -240,6 +240,76 @@ function exportMD(sessions, userName) {
   a.click();
 }
 
+// ─── THEMES ───────────────────────────────────────────────────────────────
+const THEMES: Record<string,{name:string,emoji:string,[k:string]:string}> = {
+  matrix: {
+    name:"Matrix", emoji:"🖥️",
+    "--color-body-bg":              "#090b09",
+    "--color-background-primary":   "#0d0f0d",
+    "--color-background-secondary": "#111611",
+    "--color-text-primary":         "#c8f0c8",
+    "--color-text-secondary":       "#5a8a5a",
+    "--color-border-secondary":     "#2a4a2a",
+    "--color-border-tertiary":      "#1a301a",
+    "--color-accent":               "#00cc55",
+  },
+  harrypotter: {
+    name:"Harry Potter", emoji:"⚡",
+    "--color-body-bg":              "#120602",
+    "--color-background-primary":   "#1c0905",
+    "--color-background-secondary": "#2a1208",
+    "--color-text-primary":         "#f0e0b0",
+    "--color-text-secondary":       "#c09040",
+    "--color-border-secondary":     "#5a2810",
+    "--color-border-tertiary":      "#3a1808",
+    "--color-accent":               "#c0392b",
+  },
+  lotr: {
+    name:"Lord of the Rings", emoji:"💍",
+    "--color-body-bg":              "#080600",
+    "--color-background-primary":   "#0e0b06",
+    "--color-background-secondary": "#1a1508",
+    "--color-text-primary":         "#e8d5a0",
+    "--color-text-secondary":       "#8a7040",
+    "--color-border-secondary":     "#3a3015",
+    "--color-border-tertiary":      "#252010",
+    "--color-accent":               "#b8860b",
+  },
+  sonic: {
+    name:"Sonic", emoji:"🦔",
+    "--color-body-bg":              "#000820",
+    "--color-background-primary":   "#000c3a",
+    "--color-background-secondary": "#001055",
+    "--color-text-primary":         "#70d8ff",
+    "--color-text-secondary":       "#ffcc00",
+    "--color-border-secondary":     "#0044bb",
+    "--color-border-tertiary":      "#002288",
+    "--color-accent":               "#ffcc00",
+  },
+  zelda: {
+    name:"Zelda", emoji:"🗡️",
+    "--color-body-bg":              "#030800",
+    "--color-background-primary":   "#060e03",
+    "--color-background-secondary": "#0b1a05",
+    "--color-text-primary":         "#a8e060",
+    "--color-text-secondary":       "#d4a820",
+    "--color-border-secondary":     "#2a5010",
+    "--color-border-tertiary":      "#1a3208",
+    "--color-accent":               "#d4a820",
+  },
+  daylight: {
+    name:"Daylight", emoji:"☀️",
+    "--color-body-bg":              "#eeeeee",
+    "--color-background-primary":   "#ffffff",
+    "--color-background-secondary": "#f5f5f5",
+    "--color-text-primary":         "#1a1a1a",
+    "--color-text-secondary":       "#666666",
+    "--color-border-secondary":     "#d0d0d0",
+    "--color-border-tertiary":      "#e8e8e8",
+    "--color-accent":               "#185FA5",
+  },
+};
+
 // ─── STYLES ───────────────────────────────────────────────────────────────
 const S = {
   wrap: {fontFamily:"var(--font-mono)",color:"var(--color-text-primary)",maxWidth:540,margin:"0 auto",padding:"0 0 5rem"},
@@ -253,7 +323,7 @@ const S = {
   input: {width:"100%",boxSizing:"border-box",padding:"7px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13},
   sm: {width:68,padding:"5px 8px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13},
   btn: {padding:"6px 14px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"transparent",color:"var(--color-text-primary)",cursor:"pointer",fontSize:13},
-  btnPrimary: {padding:"7px 16px",borderRadius:"var(--border-radius-md)",border:"none",background:"#185FA5",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500},
+  btnPrimary: {padding:"7px 16px",borderRadius:"var(--border-radius-md)",border:"none",background:"var(--color-accent)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500},
   btnDanger: {padding:"6px 12px",borderRadius:"var(--border-radius-md)",border:"0.5px solid #A32D2D",background:"transparent",color:"#A32D2D",cursor:"pointer",fontSize:12},
   tag: c=>({fontSize:11,padding:"2px 8px",borderRadius:10,background:c+"22",color:c,fontWeight:500,display:"inline-block"}),
   prBadge: {fontSize:11,padding:"2px 7px",borderRadius:10,background:"#FAEEDA",color:"#BA7517",fontWeight:500},
@@ -302,6 +372,7 @@ export default function GymBro() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState(null);
   const [aiErr, setAiErr] = useState("");
+  const [theme, setTheme] = useState("matrix");
 
   // ── DB FILTER (must be before early return — Rules of Hooks) ──
   const filteredDB = useMemo(()=>DB.filter(e=>
@@ -320,16 +391,23 @@ export default function GymBro() {
         if (d.sessions) setSessions(d.sessions);
         if (d.routines) setRoutines(d.routines);
         if (d.loggedIn) setLoggedIn(d.loggedIn);
+        if (d.theme)    setTheme(d.theme);
       }
     } catch(e) {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
   useEffect(()=>{
-    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn}));
-  },[users,sessions,routines,loggedIn]);
+    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn,theme}));
+  },[users,sessions,routines,loggedIn,theme]);
 
-  if (!loggedIn) return <AuthScreen users={users} setUsers={setUsers} sessions={sessions} setSessions={setSessions} routines={routines} setRoutines={setRoutines} authMode={authMode} setAuthMode={setAuthMode} authForm={authForm} setAuthForm={setAuthForm} authErr={authErr} setAuthErr={setAuthErr} onLogin={u=>{setLoggedIn(u);setAuthErr("");}} />;
+  useEffect(()=>{
+    const t = THEMES[theme] || THEMES.matrix;
+    Object.entries(t).forEach(([k,v])=>{ if(k.startsWith("--")) document.documentElement.style.setProperty(k,v); });
+    document.documentElement.style.setProperty("--color-body-bg", t["--color-body-bg"]);
+  },[theme]);
+
+  if (!loggedIn) return <AuthScreen users={users} setUsers={setUsers} sessions={sessions} setSessions={setSessions} routines={routines} setRoutines={setRoutines} authMode={authMode} setAuthMode={setAuthMode} authForm={authForm} setAuthForm={setAuthForm} authErr={authErr} setAuthErr={setAuthErr} onLogin={u=>{setLoggedIn(u);setAuthErr("");}} theme={theme} setTheme={setTheme} />;
 
   const uid = loggedIn.id;
   const userSessions = sessions[uid]||[];
@@ -443,6 +521,9 @@ export default function GymBro() {
       <div style={S.header}>
         <span style={S.logo}>Gym Bro</span>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <select value={theme} onChange={e=>setTheme(e.target.value)} style={{background:"var(--color-background-secondary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",padding:"3px 6px",fontSize:13,cursor:"pointer"}}>
+            {Object.entries(THEMES).map(([k,v])=><option key={k} value={k}>{v.emoji} {v.name}</option>)}
+          </select>
           <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{loggedIn.name}</span>
           <button style={S.btn} onClick={()=>setLoggedIn(null)}>Sign out</button>
         </div>
@@ -466,7 +547,7 @@ export default function GymBro() {
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:"1.5rem"}}>
             {calDays.map(d=>{
               const hasSesh = sessionsByDate[d]?.length>0;
-              return <div key={d} title={d} style={{height:18,borderRadius:3,background:hasSesh?"#185FA5":"var(--color-background-secondary)",opacity:hasSesh?0.85:1}} />;
+              return <div key={d} title={d} style={{height:18,borderRadius:3,background:hasSesh?"var(--color-accent)":"var(--color-background-secondary)",opacity:hasSesh?0.85:1}} />;
             })}
           </div>
           <div style={S.secTitle}>Top PRs</div>
@@ -684,7 +765,7 @@ export default function GymBro() {
         <div>
           <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center"}}>
             <span style={{fontSize:13}}>Unit:</span>
-            {["lbs","kg"].map(u=><button key={u} style={S.pill(unit===u,"#185FA5")} onClick={()=>{setUnit(u);setTargetW(u==="lbs"?135:60);}}>{u}</button>)}
+            {["lbs","kg"].map(u=><button key={u} style={S.pill(unit===u,"var(--color-accent)")} onClick={()=>{setUnit(u);setTargetW(u==="lbs"?135:60);}}>{u}</button>)}
           </div>
           <div style={{display:"flex",gap:6,marginBottom:14}}>
             {BARS.map((b,i)=><button key={b.name} style={S.pill(barIdx===i,"#3B6D11")} onClick={()=>setBarIdx(i)}>{b.name} ({unit==="lbs"?b.weight:Math.round(b.weight*0.453592)})</button>)}
@@ -721,7 +802,7 @@ export default function GymBro() {
         <div>
           <input value={dbSearch} onChange={e=>setDbSearch(e.target.value)} placeholder="Search exercises..." style={{...S.input,marginBottom:8}}/>
           <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:6}}>
-            {EQ_TYPES.map(t=><button key={t} style={S.pill(dbEq===t,"#185FA5")} onClick={()=>setDbEq(t)}>{t}</button>)}
+            {EQ_TYPES.map(t=><button key={t} style={S.pill(dbEq===t,"var(--color-accent)")} onClick={()=>setDbEq(t)}>{t}</button>)}
           </div>
           <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:12}}>
             {MUSCLES.map(m=><button key={m} style={S.pill(dbMuscle===m,"#534AB7")} onClick={()=>setDbMuscle(m)}>{m}</button>)}
@@ -732,7 +813,7 @@ export default function GymBro() {
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontSize:14,fontWeight:500}}>{ex.name}</span>
                 <div style={{display:"flex",gap:4}}>
-                  <span style={S.tag("#185FA5")}>{ex.muscle}</span>
+                  <span style={S.tag("var(--color-accent)")}>{ex.muscle}</span>
                   <span style={S.tag("#3B6D11")}>{ex.eq}</span>
                 </div>
               </div>
@@ -776,13 +857,13 @@ export default function GymBro() {
 }
 
 // ─── AUTH SCREEN ──────────────────────────────────────────────────────────
-function AuthScreen({users,setUsers,sessions,setSessions,routines,setRoutines,authMode,setAuthMode,authForm,setAuthForm,authErr,setAuthErr,onLogin}) {
+function AuthScreen({users,setUsers,sessions,setSessions,routines,setRoutines,authMode,setAuthMode,authForm,setAuthForm,authErr,setAuthErr,onLogin,theme,setTheme}) {
   const S2 = {
     wrap:{fontFamily:"var(--font-mono)",color:"var(--color-text-primary)",maxWidth:340,margin:"0 auto",padding:"3rem 1.5rem",minHeight:"100dvh"},
     card:{background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1.5rem"},
     input:{width:"100%",boxSizing:"border-box",padding:"7px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:14,marginBottom:10},
-    btn:{width:"100%",padding:"8px",borderRadius:"var(--border-radius-md)",border:"none",background:"#185FA5",color:"#fff",cursor:"pointer",fontSize:14,fontWeight:500},
-    link:{fontSize:13,color:"#185FA5",cursor:"pointer",textDecoration:"underline"},
+    btn:{width:"100%",padding:"8px",borderRadius:"var(--border-radius-md)",border:"none",background:"var(--color-accent)",color:"#fff",cursor:"pointer",fontSize:14,fontWeight:500},
+    link:{fontSize:13,color:"var(--color-accent)",cursor:"pointer",textDecoration:"underline"},
   };
   function handle() {
     if (authMode==="login") {
@@ -815,6 +896,11 @@ function AuthScreen({users,setUsers,sessions,setSessions,routines,setRoutines,au
         </div>
       </div>
       <div style={{fontSize:12,color:"var(--color-text-secondary)",textAlign:"center",marginTop:12}}>Demo: username "Alex" password "1234"</div>
+      <div style={{textAlign:"center",marginTop:"1.5rem"}}>
+        <select value={theme} onChange={e=>setTheme(e.target.value)} style={{background:"var(--color-background-secondary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",padding:"4px 8px",fontSize:13,cursor:"pointer"}}>
+          {Object.entries(THEMES).map(([k,v])=><option key={k} value={k}>{v.emoji} {v.name}</option>)}
+        </select>
+      </div>
     </div>
   );
 }
@@ -858,7 +944,7 @@ function ProgressBar({sessions,exName}) {
       {pts.map((p,i)=>{
         const h=Math.round(8+((p.best-min)/range)*20);
         const isLast=i===pts.length-1;
-        return <div key={i} title={`${p.date}: ${p.best} lbs`} style={{flex:1,height:h,background:isLast?"#185FA5":"var(--color-background-secondary)",border:`0.5px solid ${isLast?"#185FA5":"var(--color-border-secondary)"}`,borderRadius:2}}/>;
+        return <div key={i} title={`${p.date}: ${p.best} lbs`} style={{flex:1,height:h,background:isLast?"var(--color-accent)":"var(--color-background-secondary)",border:`0.5px solid ${isLast?"var(--color-accent)":"var(--color-border-secondary)"}`,borderRadius:2}}/>;
       })}
     </div>
   );
