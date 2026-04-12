@@ -32,6 +32,10 @@
       input, button, select, textarea {
         font-family: var(--font-mono);
       }
+      /* iOS: prevent auto-zoom on input focus (triggered when font-size < 16px) */
+      input, select, textarea {
+        font-size: 16px !important;
+      }
       /* Scrollbar */
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-track { background: #090b09; }

@@ -362,7 +362,7 @@ export default function GymBro() {
         targetSets:e.sets,
         targetReps:e.reps,
         targetWeight:e.weight,
-        sets:Array.from({length:e.sets},()=>({w:e.weight,r:e.reps}))
+        sets:[{w:"",r:""}]
       })) : []
     });
     setTab("log");
@@ -542,7 +542,8 @@ export default function GymBro() {
                 return (
                   <div key={ei} style={S.card}>
                     <div style={{fontSize:14,fontWeight:500,marginBottom:4}}>{ex.name}</div>
-                    {pr && <div style={{fontSize:12,color:"#BA7517",marginBottom:4}}>PR: {pr.w} lbs × {pr.r} — resume from here</div>}
+                    {ex.targetWeight && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:2}}>Target: {ex.targetSets}×{ex.targetReps} @ {ex.targetWeight} lbs</div>}
+                    {pr && <div style={{fontSize:12,color:"#BA7517",marginBottom:4}}>PR: {pr.w} lbs × {pr.r}</div>}
                     {last && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:6}}>Last: {last.best} lbs</div>}
                     {ex.sets.map((set,si)=>(
                       <div key={si} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
