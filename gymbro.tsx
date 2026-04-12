@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 // ─── EXERCISE DATABASE (80+) ───────────────────────────────────────────────
 const DB = [
@@ -242,7 +242,7 @@ function exportMD(sessions, userName) {
 
 // ─── STYLES ───────────────────────────────────────────────────────────────
 const S = {
-  wrap: {fontFamily:"var(--font-sans)",color:"var(--color-text-primary)",maxWidth:540,margin:"0 auto",padding:"0 0 5rem"},
+  wrap: {fontFamily:"var(--font-mono)",color:"var(--color-text-primary)",maxWidth:540,margin:"0 auto",padding:"0 0 5rem"},
   header: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1rem 0 0.5rem"},
   logo: {fontSize:20,fontWeight:500},
   tabs: {display:"flex",gap:2,borderBottom:"0.5px solid var(--color-border-tertiary)",marginBottom:"1.25rem",overflowX:"auto"},
@@ -309,6 +309,25 @@ export default function GymBro() {
     (dbMuscle==="All"||e.muscle===dbMuscle)&&
     e.name.toLowerCase().includes(dbSearch.toLowerCase())
   ),[dbEq,dbMuscle,dbSearch]);
+
+  // ── PERSIST (must be before early return — Rules of Hooks) ──
+  useEffect(()=>{
+    try {
+      const saved = localStorage.getItem("gymbro_state");
+      if (saved) {
+        const d = JSON.parse(saved);
+        if (d.users)    setUsers(d.users);
+        if (d.sessions) setSessions(d.sessions);
+        if (d.routines) setRoutines(d.routines);
+        if (d.loggedIn) setLoggedIn(d.loggedIn);
+      }
+    } catch(e) {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+
+  useEffect(()=>{
+    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn}));
+  },[users,sessions,routines,loggedIn]);
 
   if (!loggedIn) return <AuthScreen users={users} setUsers={setUsers} sessions={sessions} setSessions={setSessions} routines={routines} setRoutines={setRoutines} authMode={authMode} setAuthMode={setAuthMode} authForm={authForm} setAuthForm={setAuthForm} authErr={authErr} setAuthErr={setAuthErr} onLogin={u=>{setLoggedIn(u);setAuthErr("");}} />;
 
@@ -439,9 +458,9 @@ export default function GymBro() {
       {tab==="dashboard" && (
         <div>
           <div style={S.metricRow}>
-            <div style={S.metric}><div style={S.metricVal}>{userSessions.length}</div><div style={S.metricLbl}>sessions</div></div>
-            <div style={S.metric}><div style={S.metricVal}>{Object.keys(prs).length}</div><div style={S.metricLbl}>PRs</div></div>
-            <div style={S.metric}><div style={S.metricVal}>{userRoutines.length}</div><div style={S.metricLbl}>routines</div></div>
+            <div style={{...S.metric,cursor:"pointer"}} onClick={()=>setTab("log")}><div style={S.metricVal}>{userSessions.length}</div><div style={S.metricLbl}>sessions</div></div>
+            <div style={{...S.metric,cursor:"pointer"}} onClick={()=>setTab("progress")}><div style={S.metricVal}>{Object.keys(prs).length}</div><div style={S.metricLbl}>PRs</div></div>
+            <div style={{...S.metric,cursor:"pointer"}} onClick={()=>setTab("routines")}><div style={S.metricVal}>{userRoutines.length}</div><div style={S.metricLbl}>routines</div></div>
           </div>
           <div style={S.secTitle}>Last 4 weeks</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:"1.5rem"}}>
@@ -758,7 +777,7 @@ export default function GymBro() {
 // ─── AUTH SCREEN ──────────────────────────────────────────────────────────
 function AuthScreen({users,setUsers,sessions,setSessions,routines,setRoutines,authMode,setAuthMode,authForm,setAuthForm,authErr,setAuthErr,onLogin}) {
   const S2 = {
-    wrap:{fontFamily:"var(--font-sans)",color:"var(--color-text-primary)",maxWidth:340,margin:"0 auto",padding:"3rem 1rem"},
+    wrap:{fontFamily:"var(--font-mono)",color:"var(--color-text-primary)",maxWidth:340,margin:"0 auto",padding:"3rem 1.5rem",minHeight:"100dvh"},
     card:{background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1.5rem"},
     input:{width:"100%",boxSizing:"border-box",padding:"7px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:14,marginBottom:10},
     btn:{width:"100%",padding:"8px",borderRadius:"var(--border-radius-md)",border:"none",background:"#185FA5",color:"#fff",cursor:"pointer",fontSize:14,fontWeight:500},

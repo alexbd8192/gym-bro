@@ -4,6 +4,39 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gym Bro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --color-background-primary:   #0d0f0d;
+        --color-background-secondary: #111611;
+        --color-text-primary:         #c8f0c8;
+        --color-text-secondary:       #5a8a5a;
+        --color-border-primary:       #1e3a1e;
+        --color-border-secondary:     #2a4a2a;
+        --color-border-tertiary:      #1a301a;
+        --border-radius-lg:           6px;
+        --border-radius-md:           4px;
+        --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #090b09;
+        color: var(--color-text-primary);
+        font-family: var(--font-mono);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+      input, button, select, textarea {
+        font-family: var(--font-mono);
+      }
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #090b09; }
+      ::-webkit-scrollbar-thumb { background: #2a4a2a; border-radius: 3px; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
