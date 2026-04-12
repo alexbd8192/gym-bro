@@ -4,6 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gym Bro</title>
+    <!-- Apply saved theme before first paint — eliminates flash -->
+    <script>
+      (function(){
+        var T={
+          matrix:      {"--color-body-bg":"#090b09","--color-background-primary":"#0d0f0d","--color-background-secondary":"#111611","--color-text-primary":"#c8f0c8","--color-text-secondary":"#5a8a5a","--color-border-secondary":"#2a4a2a","--color-border-tertiary":"#1a301a","--color-accent":"#00cc55"},
+          harrypotter: {"--color-body-bg":"#120602","--color-background-primary":"#1c0905","--color-background-secondary":"#2a1208","--color-text-primary":"#f0e0b0","--color-text-secondary":"#c09040","--color-border-secondary":"#5a2810","--color-border-tertiary":"#3a1808","--color-accent":"#c0392b"},
+          lotr:        {"--color-body-bg":"#080600","--color-background-primary":"#0e0b06","--color-background-secondary":"#1a1508","--color-text-primary":"#e8d5a0","--color-text-secondary":"#8a7040","--color-border-secondary":"#3a3015","--color-border-tertiary":"#252010","--color-accent":"#b8860b"},
+          sonic:       {"--color-body-bg":"#000820","--color-background-primary":"#000c3a","--color-background-secondary":"#001055","--color-text-primary":"#70d8ff","--color-text-secondary":"#ffcc00","--color-border-secondary":"#0044bb","--color-border-tertiary":"#002288","--color-accent":"#ffcc00"},
+          zelda:       {"--color-body-bg":"#030800","--color-background-primary":"#060e03","--color-background-secondary":"#0b1a05","--color-text-primary":"#a8e060","--color-text-secondary":"#d4a820","--color-border-secondary":"#2a5010","--color-border-tertiary":"#1a3208","--color-accent":"#d4a820"},
+          wow:         {"--color-body-bg":"#060810","--color-background-primary":"#0a0e1a","--color-background-secondary":"#10182a","--color-text-primary":"#f0c060","--color-text-secondary":"#8090c0","--color-border-secondary":"#2a3870","--color-border-tertiary":"#1a2450","--color-accent":"#c89030"},
+          daylight:    {"--color-body-bg":"#eeeeee","--color-background-primary":"#ffffff","--color-background-secondary":"#f5f5f5","--color-text-primary":"#1a1a1a","--color-text-secondary":"#666666","--color-border-secondary":"#d0d0d0","--color-border-tertiary":"#e8e8e8","--color-accent":"#185FA5"}
+        };
+        try{
+          var saved=JSON.parse(localStorage.getItem('gymbro_state')||'{}');
+          var t=T[saved.theme]||T.matrix;
+          var r=document.documentElement;
+          Object.keys(t).forEach(function(k){r.style.setProperty(k,t[k]);});
+        }catch(e){}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -40,8 +60,8 @@
       }
       /* Scrollbar */
       ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-track { background: #090b09; }
-      ::-webkit-scrollbar-thumb { background: #2a4a2a; border-radius: 3px; }
+      ::-webkit-scrollbar-track { background: var(--color-body-bg); }
+      ::-webkit-scrollbar-thumb { background: var(--color-border-secondary); border-radius: 3px; }
     </style>
   </head>
   <body>
