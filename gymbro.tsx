@@ -493,6 +493,9 @@ export default function GymBro() {
   const [routineForm, setRoutineForm] = useState({name:"",exercises:[]});
   const [routineExSearch, setRoutineExSearch] = useState("");
 
+  // Calendar state
+  const [calSelectedDay, setCalSelectedDay] = useState(null);
+
   const [theme, setTheme] = useState("matrix");
 
   // ── DB FILTER (must be before early return — Rules of Hooks) ──
@@ -603,9 +606,15 @@ export default function GymBro() {
   const plateList = calcPlates(targetW, barW, plates);
 
   // ── CALENDAR ──
-  const sessionsByDate = {};
+  const sessionsByDate: Record<string,typeof userSessions> = {};
   userSessions.forEach(s=>{ sessionsByDate[s.date]=(sessionsByDate[s.date]||[]); sessionsByDate[s.date].push(s); });
-  const calDays = Array.from({length:28},(_,i)=>{ const d=new Date(); d.setDate(d.getDate()-(27-i)); return d.toISOString().split("T")[0]; });
+  const todayDT = new Date();
+  const todayDow = todayDT.getDay(); // 0=Sun
+  const daysSinceMon = todayDow === 0 ? 6 : todayDow - 1;
+  const calStart = new Date(todayDT);
+  calStart.setDate(todayDT.getDate() - daysSinceMon - 28); // 5 weeks back, starting Monday
+  const calDays = Array.from({length:35},(_,i)=>{ const d=new Date(calStart); d.setDate(calStart.getDate()+i); return d.toISOString().split("T")[0]; });
+  const calDayLabels = ["Mo","Tu","We","Th","Fr","Sa","Su"];
 
   return (
     <div style={S.wrap}>
@@ -634,13 +643,57 @@ export default function GymBro() {
             <div style={{...S.metric,cursor:"pointer"}} onClick={()=>setTab("progress")}><div style={S.metricVal}>{Object.keys(prs).length}</div><div style={S.metricLbl}>PRs</div></div>
             <div style={{...S.metric,cursor:"pointer"}} onClick={()=>setTab("routines")}><div style={S.metricVal}>{userRoutines.length}</div><div style={S.metricLbl}>routines</div></div>
           </div>
-          <div style={S.secTitle}>Last 4 weeks</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:"1.5rem"}}>
+          <div style={S.secTitle}>Last 5 weeks</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
+            {calDayLabels.map(l=><div key={l} style={{textAlign:"center",fontSize:10,color:"var(--color-text-secondary)",paddingBottom:2}}>{l}</div>)}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:"0.5rem"}}>
             {calDays.map(d=>{
-              const hasSesh = sessionsByDate[d]?.length>0;
-              return <div key={d} title={d} style={{height:18,borderRadius:3,background:hasSesh?"var(--color-accent)":"var(--color-background-secondary)",opacity:hasSesh?0.85:1}} />;
+              const sessionsOnDay = sessionsByDate[d]||[];
+              const hasSesh = sessionsOnDay.length > 0;
+              const isToday = d === today;
+              const isFuture = d > today;
+              const isSelected = d === calSelectedDay;
+              const dayNum = new Date(d+"T12:00:00").getDate();
+              return (
+                <div key={d}
+                  onClick={()=>hasSesh&&setCalSelectedDay(isSelected?null:d)}
+                  style={{
+                    height:40,borderRadius:4,
+                    background: hasSesh ? "var(--color-accent)22" : "var(--color-background-secondary)",
+                    border: isSelected ? `2px solid var(--color-accent)` : isToday ? `1.5px solid var(--color-text-secondary)` : "0.5px solid var(--color-border-tertiary)",
+                    cursor: hasSesh ? "pointer" : "default",
+                    display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,
+                    opacity: isFuture ? 0.3 : 1,
+                  }}>
+                  <span style={{fontSize:11,fontWeight:isToday?600:400,color:hasSesh?"var(--color-accent)":isToday?"var(--color-text-primary)":"var(--color-text-secondary)"}}>{dayNum}</span>
+                  {hasSesh && <div style={{width:4,height:4,borderRadius:"50%",background:"var(--color-accent)"}}/>}
+                </div>
+              );
             })}
           </div>
+          {calSelectedDay && sessionsByDate[calSelectedDay] && (
+            <div style={{...S.card,marginBottom:"1rem",borderColor:"var(--color-accent)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <span style={{fontSize:13,fontWeight:500}}>
+                  {new Date(calSelectedDay+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}
+                </span>
+                <button style={{...S.btn,padding:"2px 8px",fontSize:11}} onClick={()=>setCalSelectedDay(null)}>✕</button>
+              </div>
+              {sessionsByDate[calSelectedDay].map((s,i)=>(
+                <div key={i} style={{marginBottom:i<sessionsByDate[calSelectedDay].length-1?12:0}}>
+                  <div style={{fontSize:13,fontWeight:500,color:"var(--color-accent)",marginBottom:4}}>{s.routineName}</div>
+                  {s.exercises.map((ex,j)=>(
+                    <div key={j} style={{fontSize:12,marginBottom:3}}>
+                      <span style={{color:"var(--color-text-primary)",fontWeight:500}}>{ex.name}</span>
+                      <span style={{color:"var(--color-text-secondary)"}}> — {ex.sets.map(st=>`${st.w}×${st.r}`).join(", ")}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
           <div style={S.secTitle}>Top PRs</div>
           {Object.entries(prs).slice(0,5).map(([ex,pr])=>(
             <div key={ex} style={S.card}>
