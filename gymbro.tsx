@@ -496,6 +496,9 @@ export default function GymBro() {
   // Calendar state
   const [calSelectedDay, setCalSelectedDay] = useState(null);
 
+  // Dashboard session detail state
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
+
   const [theme, setTheme] = useState("matrix");
 
   // ── DB FILTER (must be before early return — Rules of Hooks) ──
@@ -694,26 +697,59 @@ export default function GymBro() {
             </div>
           )}
 
-          <div style={S.secTitle}>Top PRs</div>
-          {Object.entries(prs).slice(0,5).map(([ex,pr])=>(
-            <div key={ex} style={S.card}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:14,fontWeight:500}}>{ex}</span>
-                <span style={S.prBadge}>{pr.w} lbs × {pr.r}</span>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:"1rem",marginBottom:8}}>
+            <span style={{fontSize:13,fontWeight:500}}>Top PRs</span>
+            <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>heaviest set · e1RM = Epley estimate</span>
+          </div>
+          {Object.entries(prs).slice(0,5).map(([ex,pr])=>{
+            const w = parseFloat(pr.w); const r = parseFloat(pr.r);
+            const e1rm = (!isNaN(w)&&!isNaN(r)&&r>1) ? Math.round(w*(1+r/30)) : null;
+            return (
+              <div key={ex} style={S.card}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{fontSize:14,fontWeight:500}}>{ex}</span>
+                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <span style={S.prBadge}>{pr.w} lbs × {pr.r} reps</span>
+                    {e1rm && <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>e1RM ~{e1rm}</span>}
+                  </div>
+                </div>
+                <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:3}}>{pr.date}</div>
               </div>
-              <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{pr.date}</div>
-            </div>
-          ))}
+            );
+          })}
           <div style={S.secTitle}>Recent sessions</div>
-          {userSessions.slice(0,3).map(s=>(
-            <div key={s.id} style={S.card}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:14,fontWeight:500}}>{s.routineName}</span>
-                <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{s.date}</span>
+          {userSessions.slice(0,3).map(s=>{
+            const isOpen = selectedSessionId === s.id;
+            return (
+              <div key={s.id} style={{...S.card,cursor:"pointer",borderColor:isOpen?"var(--color-accent)":undefined}}
+                onClick={()=>setSelectedSessionId(isOpen?null:s.id)}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{fontSize:14,fontWeight:500}}>{s.routineName}</span>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{s.date}</span>
+                    <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>{isOpen?"▲":"▼"}</span>
+                  </div>
+                </div>
+                {!isOpen && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{s.exercises.map(e=>e.name).join(", ")}</div>}
+                {isOpen && (
+                  <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
+                    {s.exercises.map((ex,j)=>(
+                      <div key={j} style={{marginBottom:6}}>
+                        <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{ex.name}</span>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:3}}>
+                          {ex.sets.map((st,k)=>(
+                            <span key={k} style={{fontSize:11,padding:"2px 7px",borderRadius:8,background:"var(--color-background-secondary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-tertiary)"}}>
+                              Set {k+1}: {st.w} lbs × {st.r}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{s.exercises.map(e=>e.name).join(", ")}</div>
-            </div>
-          ))}
+            );
+          })}
           <div style={{display:"flex",gap:8,marginTop:"1.5rem"}}>
             <button style={S.btn} onClick={()=>exportCSV(userSessions,loggedIn.name)}>Export CSV</button>
             <button style={S.btn} onClick={()=>exportMD(userSessions,loggedIn.name)}>Export Markdown</button>
