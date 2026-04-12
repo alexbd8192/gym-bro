@@ -438,13 +438,13 @@ const THEMES: Record<string,{name:string,emoji:string,[k:string]:string}> = {
 
 // ─── STYLES ───────────────────────────────────────────────────────────────
 const S = {
-  wrap: {fontFamily:"var(--font-mono)",color:"var(--color-text-primary)",maxWidth:540,margin:"0 auto",padding:"0 0 5rem"},
-  header: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1rem 0 0.5rem"},
+  wrap: {fontFamily:"var(--font-mono)",color:"var(--color-text-primary)",maxWidth:540,margin:"0 auto",padding:"0 1rem 6rem"},
+  header: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1.25rem 0 0.75rem"},
   logo: {fontSize:20,fontWeight:500},
   tabs: {display:"flex",gap:2,borderBottom:"0.5px solid var(--color-border-tertiary)",marginBottom:"1.25rem",overflowX:"auto"},
   tabBtn: a=>({padding:"8px 12px",fontSize:12,background:"none",border:"none",borderBottom:a?"2px solid var(--color-text-primary)":"2px solid transparent",color:a?"var(--color-text-primary)":"var(--color-text-secondary)",cursor:"pointer",fontWeight:a?500:400,whiteSpace:"nowrap"}),
-  card: {background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"0.875rem 1rem",marginBottom:8},
-  cardSec: {background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"0.875rem 1rem",marginBottom:8},
+  card: {background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1rem 1.25rem",marginBottom:10},
+  cardSec: {background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1rem 1.25rem",marginBottom:10},
   label: {fontSize:12,color:"var(--color-text-secondary)",marginBottom:4,marginTop:10},
   input: {width:"100%",boxSizing:"border-box",padding:"7px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13},
   sm: {width:68,padding:"5px 8px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13},
@@ -459,7 +459,7 @@ const S = {
   metricLbl: {fontSize:11,color:"var(--color-text-secondary)",marginTop:2},
   row: {display:"flex",gap:8,alignItems:"center"},
   pill: (a,c)=>({padding:"4px 12px",borderRadius:20,border:`1.5px solid ${a?c:"var(--color-border-tertiary)"}`,background:a?c+"22":"transparent",color:a?c:"var(--color-text-secondary)",fontSize:13,cursor:"pointer",fontWeight:a?500:400}),
-  secTitle: {fontSize:13,fontWeight:500,marginBottom:8,marginTop:"1rem"},
+  secTitle: {fontSize:11,fontWeight:600,letterSpacing:"0.08em",textTransform:"uppercase" as const,color:"var(--color-text-secondary)",marginBottom:10,marginTop:"1.75rem"},
 };
 
 // ─── STORAGE INIT ─────────────────────────────────────────────────────────
@@ -471,6 +471,18 @@ function loadSaved() {
   return null;
 }
 const _saved = loadSaved();
+
+function calcAge(birthDate:string) {
+  if (!birthDate) return null;
+  const today = new Date(), birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  if (today.getMonth() - birth.getMonth() < 0 || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+function cmToFtIn(cm:number) {
+  const inches = cm/2.54, ft = Math.floor(inches/12);
+  return `${ft}'${Math.round(inches%12)}"`;
+}
 
 // ─── APP ──────────────────────────────────────────────────────────────────
 export default function GymBro() {
@@ -514,6 +526,8 @@ export default function GymBro() {
   const [showArchived, setShowArchived] = useState(false);
 
   const [theme, setTheme] = useState(_saved?.theme ?? "matrix");
+  const [profiles, setProfiles] = useState<Record<string,any>>(_saved?.profiles ?? {});
+  const [profileWeightInput, setProfileWeightInput] = useState("");
 
   // ── Routine delete confirmation
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -527,7 +541,7 @@ export default function GymBro() {
 
   // ── PERSIST ──
   useEffect(()=>{
-    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn,theme}));
+    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn,theme,profiles}));
   },[users,sessions,routines,loggedIn,theme]);
 
   useEffect(()=>{
@@ -634,16 +648,13 @@ export default function GymBro() {
       <div style={S.header}>
         <span style={S.logo}>Gym Bro</span>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <select value={theme} onChange={e=>setTheme(e.target.value)} style={{background:"var(--color-background-secondary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",padding:"3px 6px",fontSize:13,cursor:"pointer"}}>
-            {Object.entries(THEMES).map(([k,v])=><option key={k} value={k}>{v.emoji} {v.name}</option>)}
-          </select>
           <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{loggedIn.name}</span>
           <button style={S.btn} onClick={()=>setLoggedIn(null)}>Sign out</button>
         </div>
       </div>
 
       <div style={S.tabs}>
-        {[["dashboard","Dashboard"],["log","Log"],["progress","Progress"],["routines","Routines"],["calc","Calculator"],["db","Exercises"]].map(([id,lbl])=>(
+        {[["dashboard","Dashboard"],["log","Log"],["progress","Progress"],["routines","Routines"],["calc","Calc"],["db","Exercises"],["profile","Profile"]].map(([id,lbl])=>(
           <button key={id} style={S.tabBtn(tab===id)} onClick={()=>setTab(id)}>{lbl}</button>
         ))}
       </div>
@@ -760,10 +771,6 @@ export default function GymBro() {
               </div>
             );
           })}
-          <div style={{display:"flex",gap:8,marginTop:"1.5rem"}}>
-            <button style={S.btn} onClick={()=>exportCSV(userSessions,loggedIn.name)}>Export CSV</button>
-            <button style={S.btn} onClick={()=>exportMD(userSessions,loggedIn.name)}>Export Markdown</button>
-          </div>
         </div>
       )}
 
@@ -1101,6 +1108,116 @@ export default function GymBro() {
         </div>
       )}
 
+      {/* ── PROFILE ── */}
+      {tab==="profile" && (()=>{
+        const profile = profiles[uid] || {};
+        const age = calcAge(profile.birthDate);
+        const weightUnit = profile.weightUnit || "lbs";
+        const weights: any[] = profile.weights || [];
+        const lastWeight = weights[weights.length-1];
+        const prevWeight = weights[weights.length-2];
+        const weightDiff = lastWeight && prevWeight ? (lastWeight.value - prevWeight.value).toFixed(1) : null;
+
+        function saveProfile(updates:any) {
+          setProfiles(prev=>({...prev,[uid]:{...(prev[uid]||{}),...updates}}));
+        }
+        function addWeight() {
+          const v = parseFloat(profileWeightInput);
+          if (isNaN(v) || v<=0) return;
+          saveProfile({weights:[...weights,{date:today,value:v}]});
+          setProfileWeightInput("");
+        }
+
+        return (
+          <div>
+            <div style={S.secTitle}>Personal info</div>
+            <div style={S.card}>
+              <div style={{marginBottom:12}}>
+                <div style={S.label}>Name</div>
+                <div style={{fontSize:14,color:"var(--color-text-primary)"}}>{loggedIn.name}</div>
+              </div>
+              <div style={{display:"flex",gap:12,marginBottom:12}}>
+                <div style={{flex:1}}>
+                  <div style={S.label}>Birth date</div>
+                  <input type="date" value={profile.birthDate||""} onChange={e=>saveProfile({birthDate:e.target.value})} style={S.input}/>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={S.label}>Age</div>
+                  <div style={{fontSize:22,fontWeight:500,paddingTop:8}}>{age ?? "—"}</div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:12}}>
+                <div style={{flex:2}}>
+                  <div style={S.label}>Height (cm)</div>
+                  <input type="text" inputMode="decimal" value={profile.height||""} onChange={e=>saveProfile({height:e.target.value})} placeholder="e.g. 178" style={S.input}/>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={S.label}>Display</div>
+                  <div style={{fontSize:14,paddingTop:10,color:"var(--color-text-secondary)"}}>
+                    {profile.height ? cmToFtIn(parseFloat(profile.height)) : "—"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={S.secTitle}>Weight tracking</div>
+            <div style={S.card}>
+              <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:12}}>
+                {["lbs","kg"].map(u=><button key={u} style={S.pill(weightUnit===u,"var(--color-accent)")} onClick={()=>saveProfile({weightUnit:u})}>{u}</button>)}
+              </div>
+              <div style={{display:"flex",gap:8,marginBottom:12}}>
+                <input type="text" inputMode="decimal" value={profileWeightInput} onChange={e=>setProfileWeightInput(e.target.value)} placeholder={`Weight in ${weightUnit}`} style={{...S.input,margin:0}}/>
+                <button style={S.btnPrimary} onClick={addWeight}>Log</button>
+              </div>
+              {lastWeight && (
+                <div style={{display:"flex",gap:16,marginBottom:12}}>
+                  <div>
+                    <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:2}}>CURRENT</div>
+                    <div style={{fontSize:22,fontWeight:500}}>{lastWeight.value} <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{weightUnit}</span></div>
+                  </div>
+                  {weightDiff !== null && (
+                    <div>
+                      <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:2}}>CHANGE</div>
+                      <div style={{fontSize:22,fontWeight:500,color:parseFloat(weightDiff)>0?"#c0392b":"#27ae60"}}>
+                        {parseFloat(weightDiff)>0?"+":""}{weightDiff}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:2}}>LAST LOGGED</div>
+                    <div style={{fontSize:13,paddingTop:6,color:"var(--color-text-secondary)"}}>{lastWeight.date}</div>
+                  </div>
+                </div>
+              )}
+              {weights.length>0 && (
+                <div>
+                  <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:6}}>HISTORY</div>
+                  {weights.slice().reverse().slice(0,8).map((w:any,i:number)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13,padding:"4px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+                      <span style={{color:"var(--color-text-secondary)"}}>{w.date}</span>
+                      <span>{w.value} {weightUnit}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={S.secTitle}>App settings</div>
+            <div style={S.card}>
+              <div style={S.label}>Theme</div>
+              <select value={theme} onChange={e=>setTheme(e.target.value)} style={{...S.input,marginBottom:16}}>
+                {Object.entries(THEMES).map(([k,v])=><option key={k} value={k}>{v.emoji} {v.name}</option>)}
+              </select>
+              <div style={S.label}>Export my data</div>
+              <div style={{display:"flex",gap:8,marginTop:6}}>
+                <button style={S.btn} onClick={()=>exportCSV(userSessions,loggedIn.name)}>Export CSV</button>
+                <button style={S.btn} onClick={()=>exportMD(userSessions,loggedIn.name)}>Export Markdown</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
     </div>
   );
 }
@@ -1179,21 +1296,28 @@ function AddExerciseInline({onAdd}) {
 
 // ─── MINI PROGRESS BAR ────────────────────────────────────────────────────
 function ProgressBar({sessions,exName}) {
-  const pts=[];
+  const pts:any[]=[];
   [...sessions].sort((a,b)=>a.date>b.date?1:-1).forEach(s=>{
-    const ex=s.exercises.find(e=>e.name===exName);
-    if(ex) pts.push({date:s.date,best:Math.max(...ex.sets.map(s=>s.w))});
+    const ex=s.exercises.find((e:any)=>e.name===exName);
+    if(ex) pts.push({date:s.date,best:Math.max(...ex.sets.map((s:any)=>parseFloat(s.w)||0))});
   });
-  if(pts.length<2) return null;
-  const max=Math.max(...pts.map(p=>p.best));
-  const min=Math.min(...pts.map(p=>p.best));
-  const range=max-min||1;
+  // Always show 5 bars — pad left with empty slots if fewer sessions
+  const recent=pts.slice(-5);
+  while(recent.length<5) recent.unshift({date:null,best:0});
+  const max=Math.max(...recent.map((p:any)=>p.best))||1;
   return (
-    <div style={{display:"flex",gap:3,alignItems:"flex-end",height:28,marginTop:4}}>
-      {pts.map((p,i)=>{
-        const h=Math.round(8+((p.best-min)/range)*20);
-        const isLast=i===pts.length-1;
-        return <div key={i} title={`${p.date}: ${p.best} lbs`} style={{flex:1,height:h,background:isLast?"var(--color-accent)":"var(--color-background-secondary)",border:`0.5px solid ${isLast?"var(--color-accent)":"var(--color-border-secondary)"}`,borderRadius:2}}/>;
+    <div style={{display:"flex",gap:4,alignItems:"flex-end",height:32,marginTop:6}}>
+      {recent.map((p:any,i:number)=>{
+        const isEmpty=p.best===0;
+        const isLast=i===4;
+        const h=isEmpty?3:Math.round(6+(p.best/max)*26);
+        return (
+          <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+            <div title={p.date?`${p.date}: ${p.best} lbs`:"No data"}
+              style={{width:"100%",height:h,background:isEmpty?"transparent":isLast?"var(--color-accent)":"var(--color-background-secondary)",border:`0.5px solid ${isEmpty?"var(--color-border-tertiary)":isLast?"var(--color-accent)":"var(--color-border-secondary)"}`,borderRadius:2,borderStyle:isEmpty?"dashed":"solid"}}/>
+            {p.date && <span style={{fontSize:9,color:"var(--color-text-secondary)"}}>{p.best}</span>}
+          </div>
+        );
       })}
     </div>
   );
