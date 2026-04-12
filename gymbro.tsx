@@ -495,9 +495,13 @@ export default function GymBro() {
 
   // Calendar state
   const [calSelectedDay, setCalSelectedDay] = useState(null);
+  const [logCalSelectedDay, setLogCalSelectedDay] = useState(null);
 
   // Dashboard session detail state
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+
+  // Routines archive UI state
+  const [showArchived, setShowArchived] = useState(false);
 
   const [theme, setTheme] = useState("matrix");
 
@@ -600,6 +604,14 @@ export default function GymBro() {
 
   function deleteRoutine(id) {
     setRoutines(prev=>({...prev,[uid]:prev[uid].filter(r=>r.id!==id)}));
+  }
+
+  function archiveRoutine(id) {
+    setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>r.id===id?{...r,archived:true}:r)}));
+  }
+
+  function unarchiveRoutine(id) {
+    setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>r.id===id?{...r,archived:false}:r)}));
   }
 
   // ── CALC ──
@@ -764,7 +776,7 @@ export default function GymBro() {
             <div>
               <div style={S.secTitle}>Start a session</div>
               <button style={{...S.btnPrimary,marginBottom:8,width:"100%"}} onClick={()=>startSession(null)}>Freestyle session</button>
-              {userRoutines.map(r=>(
+              {userRoutines.filter(r=>!r.archived).map(r=>(
                 <div key={r.id} style={{...S.card,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div>
                     <div style={{fontSize:14,fontWeight:500}}>{r.name}</div>
@@ -773,23 +785,70 @@ export default function GymBro() {
                   <button style={S.btnPrimary} onClick={()=>startSession(r)}>Start</button>
                 </div>
               ))}
-              <div style={S.secTitle}>Session history</div>
-              {userSessions.map(s=>(
+              <div style={S.secTitle}>Recent sessions</div>
+              {userSessions.slice(0,5).map(s=>(
                 <div key={s.id} style={S.card}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                     <span style={{fontSize:14,fontWeight:500}}>{s.routineName}</span>
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
                       <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{s.date}</span>
-                      <button style={S.btn} onClick={()=>editSession(s)}>Edit</button>
+                      <button style={S.btn} onClick={e=>{e.stopPropagation();editSession(s);}}>Edit</button>
                     </div>
                   </div>
-                  {s.exercises.map((ex,i)=>(
-                    <div key={i} style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:1}}>
-                      <strong style={{color:"var(--color-text-primary)"}}>{ex.name}</strong> — {ex.sets.map(s=>`${s.w}×${s.r}`).join(", ")}
+                  <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{s.exercises.map(e=>e.name).join(", ")}</div>
+                </div>
+              ))}
+              <div style={S.secTitle}>History calendar</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
+                {calDayLabels.map(l=><div key={l} style={{textAlign:"center",fontSize:10,color:"var(--color-text-secondary)",paddingBottom:2}}>{l}</div>)}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:"0.5rem"}}>
+                {calDays.map(d=>{
+                  const sessionsOnDay = sessionsByDate[d]||[];
+                  const hasSesh = sessionsOnDay.length>0;
+                  const isToday = d===today;
+                  const isFuture = d>today;
+                  const isSelected = d===logCalSelectedDay;
+                  const dayNum = new Date(d+"T12:00:00").getDate();
+                  return (
+                    <div key={d} onClick={()=>hasSesh&&setLogCalSelectedDay(isSelected?null:d)}
+                      style={{height:40,borderRadius:4,background:hasSesh?"var(--color-accent)22":"var(--color-background-secondary)",border:isSelected?`2px solid var(--color-accent)`:isToday?`1.5px solid var(--color-text-secondary)`:"0.5px solid var(--color-border-tertiary)",cursor:hasSesh?"pointer":"default",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,opacity:isFuture?0.3:1}}>
+                      <span style={{fontSize:11,fontWeight:isToday?600:400,color:hasSesh?"var(--color-accent)":isToday?"var(--color-text-primary)":"var(--color-text-secondary)"}}>{dayNum}</span>
+                      {hasSesh&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--color-accent)"}}/>}
+                    </div>
+                  );
+                })}
+              </div>
+              {logCalSelectedDay && sessionsByDate[logCalSelectedDay] && (
+                <div style={{...S.card,borderColor:"var(--color-accent)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <span style={{fontSize:13,fontWeight:500}}>
+                      {new Date(logCalSelectedDay+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}
+                    </span>
+                    <button style={{...S.btn,padding:"2px 8px",fontSize:11}} onClick={()=>setLogCalSelectedDay(null)}>✕</button>
+                  </div>
+                  {sessionsByDate[logCalSelectedDay].map((s,i)=>(
+                    <div key={i} style={{marginBottom:i<sessionsByDate[logCalSelectedDay].length-1?12:0}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                        <span style={{fontSize:13,fontWeight:500,color:"var(--color-accent)"}}>{s.routineName}</span>
+                        <button style={S.btn} onClick={()=>{editSession(s);setLogCalSelectedDay(null);}}>Edit</button>
+                      </div>
+                      {s.exercises.map((ex,j)=>(
+                        <div key={j} style={{marginBottom:4}}>
+                          <span style={{fontSize:12,fontWeight:500,color:"var(--color-text-primary)"}}>{ex.name}</span>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:2}}>
+                            {ex.sets.map((st,k)=>(
+                              <span key={k} style={{fontSize:11,padding:"2px 7px",borderRadius:8,background:"var(--color-background-secondary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-tertiary)"}}>
+                                Set {k+1}: {st.w}×{st.r}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
-              ))}
+              )}
             </div>
           ) : (
             <div>
@@ -877,12 +936,13 @@ export default function GymBro() {
         <div>
           {!showNewRoutine && (
             <>
-              {userRoutines.map(r=>(
+              {userRoutines.filter(r=>!r.archived).map(r=>(
                 <div key={r.id} style={S.card}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                     <span style={{fontSize:15,fontWeight:500}}>{r.name}</span>
                     <div style={{display:"flex",gap:6}}>
                       <button style={S.btn} onClick={()=>editRoutine(r)}>Edit</button>
+                      <button style={S.btn} onClick={()=>archiveRoutine(r.id)} title="Archive">Archive</button>
                       <button style={S.btnDanger} onClick={()=>deleteRoutine(r.id)}>Delete</button>
                     </div>
                   </div>
@@ -895,6 +955,26 @@ export default function GymBro() {
                 </div>
               ))}
               <button style={{...S.btnPrimary,marginTop:4}} onClick={()=>{setRoutineForm({name:"",exercises:[]});setEditRoutineId(null);setShowNewRoutine(true);}}>+ New routine</button>
+              {userRoutines.some(r=>r.archived) && (
+                <div style={{marginTop:"1.5rem"}}>
+                  <button style={{...S.btn,width:"100%",textAlign:"left",display:"flex",justifyContent:"space-between"}} onClick={()=>setShowArchived(v=>!v)}>
+                    <span>Archive ({userRoutines.filter(r=>r.archived).length})</span>
+                    <span>{showArchived?"▲":"▼"}</span>
+                  </button>
+                  {showArchived && userRoutines.filter(r=>r.archived).map(r=>(
+                    <div key={r.id} style={{...S.card,opacity:0.7,marginTop:6}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                        <span style={{fontSize:14,fontWeight:500,color:"var(--color-text-secondary)"}}>{r.name}</span>
+                        <div style={{display:"flex",gap:6}}>
+                          <button style={S.btn} onClick={()=>unarchiveRoutine(r.id)}>Restore</button>
+                          <button style={S.btnDanger} onClick={()=>deleteRoutine(r.id)}>Delete</button>
+                        </div>
+                      </div>
+                      <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{r.exercises.map(e=>e.name).join(", ")}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
           {showNewRoutine && (
