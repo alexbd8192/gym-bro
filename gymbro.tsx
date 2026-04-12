@@ -462,12 +462,22 @@ const S = {
   secTitle: {fontSize:13,fontWeight:500,marginBottom:8,marginTop:"1rem"},
 };
 
+// ─── STORAGE INIT ─────────────────────────────────────────────────────────
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem("gymbro_state");
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+const _saved = loadSaved();
+
 // ─── APP ──────────────────────────────────────────────────────────────────
 export default function GymBro() {
-  const [users, setUsers] = useState(DEMO_USERS);
-  const [sessions, setSessions] = useState(DEMO_SESSIONS);
-  const [routines, setRoutines] = useState(DEMO_ROUTINES);
-  const [loggedIn, setLoggedIn] = useState(null);
+  const [users, setUsers] = useState(_saved?.users ?? DEMO_USERS);
+  const [sessions, setSessions] = useState(_saved?.sessions ?? DEMO_SESSIONS);
+  const [routines, setRoutines] = useState(_saved?.routines ?? DEMO_ROUTINES);
+  const [loggedIn, setLoggedIn] = useState(_saved?.loggedIn ?? null);
   const [authMode, setAuthMode] = useState("login");
   const [authForm, setAuthForm] = useState({name:"",password:""});
   const [authErr, setAuthErr] = useState("");
@@ -503,7 +513,10 @@ export default function GymBro() {
   // Routines archive UI state
   const [showArchived, setShowArchived] = useState(false);
 
-  const [theme, setTheme] = useState("matrix");
+  const [theme, setTheme] = useState(_saved?.theme ?? "matrix");
+
+  // ── Routine delete confirmation
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   // ── DB FILTER (must be before early return — Rules of Hooks) ──
   const filteredDB = useMemo(()=>DB.filter(e=>
@@ -512,22 +525,7 @@ export default function GymBro() {
     e.name.toLowerCase().includes(dbSearch.toLowerCase())
   ),[dbEq,dbMuscle,dbSearch]);
 
-  // ── PERSIST (must be before early return — Rules of Hooks) ──
-  useEffect(()=>{
-    try {
-      const saved = localStorage.getItem("gymbro_state");
-      if (saved) {
-        const d = JSON.parse(saved);
-        if (d.users)    setUsers(d.users);
-        if (d.sessions) setSessions(d.sessions);
-        if (d.routines) setRoutines(d.routines);
-        if (d.loggedIn) setLoggedIn(d.loggedIn);
-        if (d.theme)    setTheme(d.theme);
-      }
-    } catch(e) {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[]);
-
+  // ── PERSIST ──
   useEffect(()=>{
     localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn,theme}));
   },[users,sessions,routines,loggedIn,theme]);
@@ -940,10 +938,20 @@ export default function GymBro() {
                 <div key={r.id} style={S.card}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                     <span style={{fontSize:15,fontWeight:500}}>{r.name}</span>
-                    <div style={{display:"flex",gap:6}}>
-                      <button style={S.btn} onClick={()=>editRoutine(r)}>Edit</button>
-                      <button style={S.btn} onClick={()=>archiveRoutine(r.id)} title="Archive">Archive</button>
-                      <button style={S.btnDanger} onClick={()=>deleteRoutine(r.id)}>Delete</button>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                      {confirmDeleteId===r.id ? (
+                        <>
+                          <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Sure?</span>
+                          <button style={S.btnDanger} onClick={()=>{deleteRoutine(r.id);setConfirmDeleteId(null);}}>Yes</button>
+                          <button style={S.btn} onClick={()=>setConfirmDeleteId(null)}>No</button>
+                        </>
+                      ) : (
+                        <>
+                          <button style={S.btn} onClick={()=>editRoutine(r)}>Edit</button>
+                          <button style={S.btn} onClick={()=>archiveRoutine(r.id)}>Archive</button>
+                          <button style={S.btnDanger} onClick={()=>setConfirmDeleteId(r.id)}>Delete</button>
+                        </>
+                      )}
                     </div>
                   </div>
                   {r.exercises.map((e,i)=>(
@@ -965,9 +973,17 @@ export default function GymBro() {
                     <div key={r.id} style={{...S.card,opacity:0.7,marginTop:6}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                         <span style={{fontSize:14,fontWeight:500,color:"var(--color-text-secondary)"}}>{r.name}</span>
-                        <div style={{display:"flex",gap:6}}>
+                        <div style={{display:"flex",gap:6,alignItems:"center"}}>
                           <button style={S.btn} onClick={()=>unarchiveRoutine(r.id)}>Restore</button>
-                          <button style={S.btnDanger} onClick={()=>deleteRoutine(r.id)}>Delete</button>
+                          {confirmDeleteId===r.id ? (
+                            <>
+                              <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Sure?</span>
+                              <button style={S.btnDanger} onClick={()=>{deleteRoutine(r.id);setConfirmDeleteId(null);}}>Yes</button>
+                              <button style={S.btn} onClick={()=>setConfirmDeleteId(null)}>No</button>
+                            </>
+                          ) : (
+                            <button style={S.btnDanger} onClick={()=>setConfirmDeleteId(r.id)}>Delete</button>
+                          )}
                         </div>
                       </div>
                       <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{r.exercises.map(e=>e.name).join(", ")}</div>
