@@ -919,7 +919,7 @@ export default function GymBro() {
                   <div style={{display:"flex",gap:6,alignItems:"center"}}>
                     {pct!==null && (
                       <span style={{fontSize:13,fontWeight:500,color:up?"#3B6D11":"#A32D2D"}}>
-                        {up?"↑":"↓"} {Math.abs(pct)}%
+                        {up?"↑":"↓"} {Math.abs(pct)}%{pct>=3?" ❤️":""}
                       </span>
                     )}
                     <span style={S.prBadge}>PR {pr.w} lbs</span>
@@ -1306,19 +1306,25 @@ function ProgressBar({sessions,exName}) {
   while(recent.length<5) recent.unshift({date:null,best:0});
   const max=Math.max(...recent.map((p:any)=>p.best))||1;
   return (
-    <div style={{display:"flex",gap:4,alignItems:"flex-end",height:32,marginTop:6}}>
-      {recent.map((p:any,i:number)=>{
-        const isEmpty=p.best===0;
-        const isLast=i===4;
-        const h=isEmpty?3:Math.round(6+(p.best/max)*26);
-        return (
-          <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-            <div title={p.date?`${p.date}: ${p.best} lbs`:"No data"}
-              style={{width:"100%",height:h,background:isEmpty?"transparent":isLast?"var(--color-accent)":"var(--color-background-secondary)",border:`0.5px solid ${isEmpty?"var(--color-border-tertiary)":isLast?"var(--color-accent)":"var(--color-border-secondary)"}`,borderRadius:2,borderStyle:isEmpty?"dashed":"solid"}}/>
-            {p.date && <span style={{fontSize:9,color:"var(--color-text-secondary)"}}>{p.best}</span>}
+    <div style={{marginTop:8,paddingBottom:2}}>
+      <div style={{display:"flex",gap:4,alignItems:"flex-end",height:32}}>
+        {recent.map((p:any,i:number)=>{
+          const isEmpty=p.best===0;
+          const isLast=i===4;
+          const h=isEmpty?3:Math.round(6+(p.best/max)*26);
+          return (
+            <div key={i} title={p.date?`${p.date}: ${p.best} lbs`:"No data"}
+              style={{flex:1,height:h,background:isEmpty?"transparent":isLast?"var(--color-accent)":"var(--color-background-secondary)",border:`0.5px solid ${isEmpty?"var(--color-border-tertiary)":isLast?"var(--color-accent)":"var(--color-border-secondary)"}`,borderRadius:2,borderStyle:isEmpty?"dashed":"solid"}}/>
+          );
+        })}
+      </div>
+      <div style={{display:"flex",gap:4,marginTop:3}}>
+        {recent.map((p:any,i:number)=>(
+          <div key={i} style={{flex:1,textAlign:"center",fontSize:9,color:i===4?"var(--color-accent)":"var(--color-text-secondary)",overflow:"hidden"}}>
+            {p.best>0 ? p.best : ""}
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
