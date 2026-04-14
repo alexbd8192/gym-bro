@@ -646,7 +646,7 @@ export default function GymBro() {
   return (
     <div style={S.wrap}>
       <div style={S.header}>
-        <span style={S.logo}>Gym Bro</span>
+        <span style={S.logo}>💪 Gym Bro 💪</span>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{loggedIn.name}</span>
           <button style={S.btn} onClick={()=>setLoggedIn(null)}>Sign out</button>
