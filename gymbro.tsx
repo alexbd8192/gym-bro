@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 
 // ─── EXERCISE DATABASE (80+) ───────────────────────────────────────────────
 const DB = [
@@ -207,6 +207,49 @@ const DB = [
   {id:188,name:"Band Overhead Press",muscle:"Shoulders",eq:"Bands",type:"Compound"},
   {id:189,name:"Band Row",muscle:"Back",eq:"Bands",type:"Compound"},
   {id:190,name:"Band Clamshell",muscle:"Glutes",eq:"Bands",type:"Isolation"},
+
+  // Traps
+  {id:191,name:"Barbell Shrug",muscle:"Traps",eq:"Barbell",type:"Isolation"},
+  {id:192,name:"Rack Pull",muscle:"Traps",eq:"Barbell",type:"Compound"},
+  {id:193,name:"Barbell High Pull",muscle:"Traps",eq:"Barbell",type:"Compound"},
+  {id:194,name:"Dumbbell Upright Row",muscle:"Traps",eq:"Dumbbell",type:"Compound"},
+  {id:195,name:"Farmer's Walk",muscle:"Traps",eq:"Dumbbell",type:"Compound"},
+  {id:196,name:"Trap Bar Shrug",muscle:"Traps",eq:"Barbell",type:"Isolation"},
+
+  // Calves
+  {id:197,name:"Barbell Calf Raise",muscle:"Calves",eq:"Barbell",type:"Isolation"},
+  {id:198,name:"Single Leg Calf Raise",muscle:"Calves",eq:"Bodyweight",type:"Isolation"},
+  {id:199,name:"Calf Press on Leg Press",muscle:"Calves",eq:"Machine",type:"Isolation"},
+  {id:200,name:"Tibialis Raise",muscle:"Calves",eq:"Bodyweight",type:"Isolation"},
+  {id:201,name:"Jump Rope",muscle:"Calves",eq:"Bodyweight",type:"Compound"},
+
+  // Abs (Core additions)
+  {id:202,name:"Crunch",muscle:"Abs",eq:"Bodyweight",type:"Isolation"},
+  {id:203,name:"Sit-Up",muscle:"Abs",eq:"Bodyweight",type:"Isolation"},
+  {id:204,name:"Decline Sit-Up",muscle:"Abs",eq:"Bodyweight",type:"Isolation"},
+  {id:205,name:"Bicycle Crunch",muscle:"Abs",eq:"Bodyweight",type:"Isolation"},
+  {id:206,name:"Side Crunch",muscle:"Abs",eq:"Bodyweight",type:"Isolation"},
+  {id:207,name:"Kneeling Cable Crunch",muscle:"Abs",eq:"Cable",type:"Isolation"},
+  {id:208,name:"Ab Machine",muscle:"Abs",eq:"Machine",type:"Isolation"},
+  {id:209,name:"Decline Crunch",muscle:"Abs",eq:"Bodyweight",type:"Isolation"},
+
+  // Neck
+  {id:210,name:"Neck Flexion",muscle:"Neck",eq:"Bodyweight",type:"Isolation"},
+  {id:211,name:"Neck Extension",muscle:"Neck",eq:"Bodyweight",type:"Isolation"},
+  {id:212,name:"Neck Lateral Flexion",muscle:"Neck",eq:"Bodyweight",type:"Isolation"},
+  {id:213,name:"Wrestler's Bridge",muscle:"Neck",eq:"Bodyweight",type:"Isometric"},
+
+  // Forearms (additions)
+  {id:214,name:"Wrist Roller",muscle:"Forearms",eq:"Bodyweight",type:"Isolation"},
+  {id:215,name:"Dead Hang",muscle:"Forearms",eq:"Bodyweight",type:"Isometric"},
+  {id:216,name:"Plate Pinch",muscle:"Forearms",eq:"Barbell",type:"Isometric"},
+  {id:217,name:"Reverse Wrist Curl",muscle:"Forearms",eq:"Dumbbell",type:"Isolation"},
+
+  // Adductors / Abductors (additions)
+  {id:218,name:"Sumo Squat",muscle:"Adductors",eq:"Dumbbell",type:"Compound"},
+  {id:219,name:"Copenhagen Plank",muscle:"Adductors",eq:"Bodyweight",type:"Isometric"},
+  {id:220,name:"Side Lying Leg Raise",muscle:"Abductors",eq:"Bodyweight",type:"Isolation"},
+  {id:221,name:"Clamshell",muscle:"Abductors",eq:"Bodyweight",type:"Isolation"},
 ];
 
 const EQ_TYPES = ["All", "Barbell", "EZ Bar", "Smith Machine", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell", "Rings", "Bands"];
@@ -216,7 +259,7 @@ const MUSCLES = ["All", ...new Set(DB.map(e => e.muscle)).values()];
 const BARS = [
   {name:"Barbell", weight:45},
   {name:"Smith Machine", weight:35},
-  {name:"EZ Bar", weight:25},
+  {name:"EZ Bar", weight:20},
 ];
 const PLATES_LBS = [45,35,25,10,5,2.5,1.25];
 const PLATES_KG  = [20,15,10,5,2.5,1.25];
@@ -441,7 +484,7 @@ const S = {
   wrap: {fontFamily:"var(--font-mono)",color:"var(--color-text-primary)",maxWidth:540,margin:"0 auto",padding:"0 1rem 6rem"},
   header: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1.25rem 0 0.75rem"},
   logo: {fontSize:20,fontWeight:500},
-  tabs: {display:"flex",gap:2,borderBottom:"0.5px solid var(--color-border-tertiary)",marginBottom:"1.25rem",overflowX:"auto"},
+  tabs: {display:"flex",gap:2,borderBottom:"0.5px solid var(--color-border-tertiary)",marginBottom:"1.25rem",position:"relative"},
   tabBtn: a=>({padding:"8px 12px",fontSize:12,background:"none",border:"none",borderBottom:a?"2px solid var(--color-text-primary)":"2px solid transparent",color:a?"var(--color-text-primary)":"var(--color-text-secondary)",cursor:"pointer",fontWeight:a?500:400,whiteSpace:"nowrap"}),
   card: {background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1rem 1.25rem",marginBottom:10},
   cardSec: {background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1rem 1.25rem",marginBottom:10},
@@ -494,6 +537,14 @@ export default function GymBro() {
   const [authForm, setAuthForm] = useState({name:"",password:""});
   const [authErr, setAuthErr] = useState("");
   const [tab, setTab] = useState("dashboard");
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+  useEffect(()=>{
+    if (!moreOpen) return;
+    const handler = (e:MouseEvent)=>{ if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return ()=>document.removeEventListener("mousedown", handler);
+  },[moreOpen]);
 
   // Calculator state
   const [unit, setUnit] = useState("lbs");
@@ -521,6 +572,7 @@ export default function GymBro() {
 
   // Dashboard session detail state
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [e1rmTooltip, setE1rmTooltip] = useState(false);
 
   // Routines archive UI state
   const [showArchived, setShowArchived] = useState(false);
@@ -654,9 +706,26 @@ export default function GymBro() {
       </div>
 
       <div style={S.tabs}>
-        {[["dashboard","Dashboard"],["log","Log"],["progress","Progress"],["routines","Routines"],["calc","Calc"],["db","Exercises"],["profile","Profile"]].map(([id,lbl])=>(
+        {[["dashboard","Dashboard"],["log","Session"],["routines","Routines"],["calc","Calc"]].map(([id,lbl])=>(
           <button key={id} style={S.tabBtn(tab===id)} onClick={()=>setTab(id)}>{lbl}</button>
         ))}
+        <div ref={moreRef} style={{position:"relative",marginLeft:"auto"}}>
+          <button
+            style={S.tabBtn(["progress","db","profile"].includes(tab) || moreOpen)}
+            onClick={()=>setMoreOpen(o=>!o)}
+          >
+            {tab==="progress"?"Progress":tab==="db"?"Exercises":tab==="profile"?"Profile":"More"} ▾
+          </button>
+          {moreOpen && (
+            <div style={{position:"absolute",right:0,top:"100%",background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",zIndex:100,minWidth:120,boxShadow:"0 4px 16px rgba(0,0,0,0.4)"}}>
+              {[["progress","Progress"],["db","Exercises"],["profile","Profile"]].map(([id,lbl])=>(
+                <button key={id} onClick={()=>{setTab(id);setMoreOpen(false);}} style={{display:"block",width:"100%",textAlign:"left",padding:"9px 14px",fontSize:12,background:tab===id?"var(--color-background-secondary)":"none",border:"none",color:tab===id?"var(--color-text-primary)":"var(--color-text-secondary)",cursor:"pointer",fontFamily:"var(--font-mono)"}}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── DASHBOARD ── */}
@@ -718,9 +787,66 @@ export default function GymBro() {
             </div>
           )}
 
+          {(()=>{
+            const ALL_MUSCLES = ["Chest","Back","Shoulders","Traps","Biceps","Triceps","Forearms","Abs","Core","Quads","Hamstrings","Glutes","Adductors","Abductors","Calves","Neck"];
+            const last6 = userSessions.slice(0,6);
+            const muscleSets: Record<string,number> = {};
+            ALL_MUSCLES.forEach(m=>{ muscleSets[m]=0; });
+            last6.forEach(s=>s.exercises.forEach(ex=>{
+              const dbEx = DB.find(d=>d.name===ex.name);
+              const muscle = dbEx?.muscle;
+              if (muscle && muscleSets[muscle]!==undefined) muscleSets[muscle] += ex.sets.length;
+            }));
+            const maxSets = Math.max(...Object.values(muscleSets), 1);
+            return (
+              <div style={{marginTop:"1rem",marginBottom:"1rem"}}>
+                <div style={{fontSize:13,fontWeight:500,marginBottom:8}}>Muscle focus · last 6 sessions</div>
+                {ALL_MUSCLES.map(muscle=>{
+                  const count = muscleSets[muscle] || 0;
+                  const pct = count / maxSets;
+                  const color = count === 0 ? "var(--color-border-secondary)" : pct >= 0.75 ? "var(--color-accent)" : pct >= 0.35 ? "#F0992B" : "#E24B4A";
+                  return (
+                    <div key={muscle} style={{marginBottom:5}}>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+                        <span style={{color: count===0 ? "var(--color-text-secondary)" : "var(--color-text-primary)"}}>{muscle}</span>
+                        <span style={{color:"var(--color-text-secondary)"}}>{count === 0 ? "—" : `${count} set${count!==1?"s":""}`}</span>
+                      </div>
+                      <div style={{height:5,borderRadius:3,background:"var(--color-background-secondary)"}}>
+                        <div style={{height:5,borderRadius:3,width: count===0 ? "2px" : `${Math.round(pct*100)}%`,background:color,transition:"width 0.3s"}}/>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div style={{fontSize:10,color:"var(--color-text-secondary)",marginTop:8}}>
+                  <span style={{color:"var(--color-accent)"}}>■</span> high volume &nbsp;
+                  <span style={{color:"#F0992B"}}>■</span> moderate &nbsp;
+                  <span style={{color:"#E24B4A"}}>■</span> low &nbsp;
+                  <span style={{color:"var(--color-border-secondary)"}}>■</span> untrained
+                </div>
+              </div>
+            );
+          })()}
+
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:"1rem",marginBottom:8}}>
             <span style={{fontSize:13,fontWeight:500}}>Top PRs</span>
-            <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>heaviest set · e1RM = Epley estimate</span>
+            <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:4}}>
+              <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>heaviest set · e1RM = Epley</span>
+              <span
+                onClick={()=>setE1rmTooltip(v=>!v)}
+                style={{fontSize:11,color:"var(--color-accent)",cursor:"pointer",userSelect:"none"}}
+              >ⓘ</span>
+              {e1rmTooltip && (
+                <div style={{position:"absolute",right:0,top:"calc(100% + 6px)",width:230,background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",padding:"10px 12px",zIndex:100,boxShadow:"0 4px 16px rgba(0,0,0,0.4)",fontSize:11,lineHeight:1.6,color:"var(--color-text-secondary)"}}>
+                  <div style={{fontWeight:600,color:"var(--color-text-primary)",marginBottom:4}}>What is e1RM?</div>
+                  <div>e1RM is your <em>estimated one-rep max</em> — the maximum weight you could theoretically lift for a single rep.</div>
+                  <div style={{marginTop:6}}>It's calculated from your heaviest logged set using the <strong>Epley formula</strong>:</div>
+                  <div style={{marginTop:6,padding:"4px 8px",background:"var(--color-background-secondary)",borderRadius:4,fontFamily:"var(--font-mono)"}}>weight × (1 + reps / 30)</div>
+                  <div style={{marginTop:6}}>e.g. 200 lbs × 8 reps → e1RM ≈ 253 lbs</div>
+                  <div style={{marginTop:8,fontSize:10,color:"var(--color-text-secondary)"}}>Most accurate for sets of 3–10 reps.</div>
+                  <button onClick={()=>setE1rmTooltip(false)} style={{marginTop:8,fontSize:10,background:"none",border:"none",color:"var(--color-accent)",cursor:"pointer",padding:0}}>close</button>
+                </div>
+              )}
+            </div>
           </div>
           {Object.entries(prs).slice(0,5).map(([ex,pr])=>{
             const w = parseFloat(pr.w); const r = parseFloat(pr.r);
