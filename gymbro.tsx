@@ -557,8 +557,13 @@ export default function GymBro() {
   const [dbMuscle, setDbMuscle] = useState("All");
 
   // Log/session state
-  const [activeSession, setActiveSession] = useState(null); // {routineName, exercises:[{name,sets:[{w,r}]}]}
+  const [activeSession, setActiveSession] = useState(null); // {routineName, exercises:[{name,sets:[{w,r}],note?:string}]}
   const [editSessionId, setEditSessionId] = useState(null);
+  const [showCommentStep, setShowCommentStep] = useState(false);
+  const [sessionComment, setSessionComment] = useState("");
+  const [restDuration, setRestDuration] = useState(120);
+  const [restRemaining, setRestRemaining] = useState<number|null>(null);
+  const [restRunning, setRestRunning] = useState(false);
 
   // Routine state
   const [editRoutineId, setEditRoutineId] = useState(null);
@@ -569,6 +574,8 @@ export default function GymBro() {
   // Calendar state
   const [calSelectedDay, setCalSelectedDay] = useState(null);
   const [logCalSelectedDay, setLogCalSelectedDay] = useState(null);
+  const [calOffset, setCalOffset] = useState(0);      // weeks back from current, dashboard
+  const [logCalOffset, setLogCalOffset] = useState(0); // weeks back from current, session
 
   // Dashboard session detail state
   const [selectedSessionId, setSelectedSessionId] = useState(null);
@@ -602,6 +609,15 @@ export default function GymBro() {
     document.documentElement.style.setProperty("--color-body-bg", t["--color-body-bg"]);
   },[theme]);
 
+  useEffect(()=>{
+    if (!restRunning || restRemaining === null || restRemaining <= 0) {
+      if (restRemaining === 0) setRestRunning(false);
+      return;
+    }
+    const id = setTimeout(()=>setRestRemaining(r=>r!==null ? r-1 : null), 1000);
+    return ()=>clearTimeout(id);
+  },[restRunning, restRemaining]);
+
   if (!loggedIn) return <AuthScreen users={users} setUsers={setUsers} sessions={sessions} setSessions={setSessions} routines={routines} setRoutines={setRoutines} authMode={authMode} setAuthMode={setAuthMode} authForm={authForm} setAuthForm={setAuthForm} authErr={authErr} setAuthErr={setAuthErr} onLogin={u=>{setLoggedIn(u);setAuthErr("");}} theme={theme} setTheme={setTheme} />;
 
   const uid = loggedIn.id;
@@ -616,7 +632,8 @@ export default function GymBro() {
       id:"s"+Date.now(),
       date:today,
       routineName:activeSession.routineName||"Freestyle",
-      exercises:activeSession.exercises.filter(e=>e.sets.length>0)
+      exercises:activeSession.exercises.filter(e=>e.sets.length>0),
+      comment: sessionComment.trim() || undefined,
     };
     if (editSessionId) {
       setSessions(prev=>({...prev,[uid]:prev[uid].map(s=>s.id===editSessionId?{...newS,id:editSessionId}:s)}));
@@ -625,6 +642,8 @@ export default function GymBro() {
       setSessions(prev=>({...prev,[uid]:[newS,...(prev[uid]||[])]}));
     }
     setActiveSession(null);
+    setShowCommentStep(false);
+    setSessionComment("");
   }
 
   function startSession(routine) {
@@ -642,8 +661,10 @@ export default function GymBro() {
   }
 
   function editSession(s) {
-    setActiveSession({routineName:s.routineName, exercises:s.exercises.map(e=>({name:e.name,sets:[...e.sets.map(x=>({...x}))]}))}); 
+    setActiveSession({routineName:s.routineName, exercises:s.exercises.map(e=>({name:e.name,sets:[...e.sets.map(x=>({...x}))],note:e.note||""}))});
     setEditSessionId(s.id);
+    setSessionComment(s.comment||"");
+    setShowCommentStep(false);
     setTab("log");
   }
 
@@ -689,10 +710,21 @@ export default function GymBro() {
   userSessions.forEach(s=>{ sessionsByDate[s.date]=(sessionsByDate[s.date]||[]); sessionsByDate[s.date].push(s); });
   const todayDT = new Date();
   const todayDow = todayDT.getDay(); // 0=Sun
-  const daysSinceMon = todayDow === 0 ? 6 : todayDow - 1;
-  const calStart = new Date(todayDT);
-  calStart.setDate(todayDT.getDate() - daysSinceMon - 28); // 5 weeks back, starting Monday
-  const calDays = Array.from({length:35},(_,i)=>{ const d=new Date(calStart); d.setDate(calStart.getDate()+i); return d.toISOString().split("T")[0]; });
+  function getCalDays(weeksBack: number) {
+    const dow = todayDT.getDay();
+    const daysSinceMon = (dow + 6) % 7;
+    const start = new Date(todayDT);
+    start.setDate(todayDT.getDate() - daysSinceMon - 28 - weeksBack * 7);
+    return Array.from({length:35},(_,i)=>{ const d=new Date(start); d.setDate(start.getDate()+i); return d.toISOString().split("T")[0]; });
+  }
+  function calMonthLabel(days: string[]) {
+    const first = new Date(days[0]+"T12:00:00");
+    const last  = new Date(days[34]+"T12:00:00");
+    const fmt = (d: Date) => d.toLocaleDateString("en-US",{month:"short",year:"numeric"});
+    return first.getMonth()===last.getMonth() ? fmt(first) : `${first.toLocaleDateString("en-US",{month:"short"})} – ${fmt(last)}`;
+  }
+  const calDays    = getCalDays(calOffset);
+  const logCalDays = getCalDays(logCalOffset);
   const calDayLabels = ["Mo","Tu","We","Th","Fr","Sa","Su"];
 
   return (
@@ -736,7 +768,14 @@ export default function GymBro() {
             <div style={{...S.metric,cursor:"pointer"}} onClick={()=>setTab("progress")}><div style={S.metricVal}>{Object.keys(prs).length}</div><div style={S.metricLbl}>PRs</div></div>
             <div style={{...S.metric,cursor:"pointer"}} onClick={()=>setTab("routines")}><div style={S.metricVal}>{userRoutines.length}</div><div style={S.metricLbl}>routines</div></div>
           </div>
-          <div style={S.secTitle}>Last 5 weeks</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"1rem",marginBottom:6}}>
+            <span style={{fontSize:13,fontWeight:500}}>Calendar</span>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <button style={S.btn} onClick={()=>{setCalOffset(o=>o+1);setCalSelectedDay(null);}}>‹</button>
+              <span style={{fontSize:11,color:"var(--color-text-secondary)",minWidth:90,textAlign:"center"}}>{calMonthLabel(calDays)}</span>
+              <button style={{...S.btn,opacity:calOffset===0?0.3:1}} disabled={calOffset===0} onClick={()=>{setCalOffset(o=>Math.max(0,o-1));setCalSelectedDay(null);}}>›</button>
+            </div>
+          </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
             {calDayLabels.map(l=><div key={l} style={{textAlign:"center",fontSize:10,color:"var(--color-text-secondary)",paddingBottom:2}}>{l}</div>)}
           </div>
@@ -864,39 +903,6 @@ export default function GymBro() {
               </div>
             );
           })}
-          <div style={S.secTitle}>Recent sessions</div>
-          {userSessions.slice(0,3).map(s=>{
-            const isOpen = selectedSessionId === s.id;
-            return (
-              <div key={s.id} style={{...S.card,cursor:"pointer",borderColor:isOpen?"var(--color-accent)":undefined}}
-                onClick={()=>setSelectedSessionId(isOpen?null:s.id)}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <span style={{fontSize:14,fontWeight:500}}>{s.routineName}</span>
-                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{s.date}</span>
-                    <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>{isOpen?"▲":"▼"}</span>
-                  </div>
-                </div>
-                {!isOpen && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{s.exercises.map(e=>e.name).join(", ")}</div>}
-                {isOpen && (
-                  <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
-                    {s.exercises.map((ex,j)=>(
-                      <div key={j} style={{marginBottom:6}}>
-                        <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{ex.name}</span>
-                        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:3}}>
-                          {ex.sets.map((st,k)=>(
-                            <span key={k} style={{fontSize:11,padding:"2px 7px",borderRadius:8,background:"var(--color-background-secondary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-tertiary)"}}>
-                              Set {k+1}: {st.w} lbs × {st.r}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
         </div>
       )}
 
@@ -917,24 +923,54 @@ export default function GymBro() {
                 </div>
               ))}
               <div style={S.secTitle}>Recent sessions</div>
-              {userSessions.slice(0,5).map(s=>(
-                <div key={s.id} style={S.card}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                    <span style={{fontSize:14,fontWeight:500}}>{s.routineName}</span>
-                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                      <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{s.date}</span>
-                      <button style={S.btn} onClick={e=>{e.stopPropagation();editSession(s);}}>Edit</button>
+              {userSessions.slice(0,5).map(s=>{
+                const isOpen = selectedSessionId === s.id;
+                return (
+                  <div key={s.id} style={{...S.card,cursor:"pointer",borderColor:isOpen?"var(--color-accent)":undefined}}
+                    onClick={()=>setSelectedSessionId(isOpen?null:s.id)}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span style={{fontSize:14,fontWeight:500}}>{s.routineName}</span>
+                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                        <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{s.date}</span>
+                        <button style={S.btn} onClick={e=>{e.stopPropagation();editSession(s);}}>Edit</button>
+                        <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>{isOpen?"▲":"▼"}</span>
+                      </div>
                     </div>
+                    {!isOpen && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{s.exercises.map(e=>e.name).join(", ")}</div>}
+                    {isOpen && (
+                      <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
+                        {s.exercises.map((ex,j)=>(
+                          <div key={j} style={{marginBottom:6}}>
+                            <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{ex.name}</span>
+                            <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:3}}>
+                              {ex.sets.map((st,k)=>(
+                                <span key={k} style={{fontSize:11,padding:"2px 7px",borderRadius:8,background:"var(--color-background-secondary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-tertiary)"}}>
+                                  Set {k+1}: {st.w} lbs × {st.r}
+                                </span>
+                              ))}
+                            </div>
+                            {ex.note && <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:3}}>📝 {ex.note}</div>}
+                          </div>
+                        ))}
+                        {s.comment && <div style={{marginTop:8,paddingTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",fontSize:12,color:"var(--color-text-secondary)",fontStyle:"italic"}}>💬 {s.comment}</div>}
+                      </div>
+                    )}
                   </div>
-                  <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{s.exercises.map(e=>e.name).join(", ")}</div>
+                );
+              })}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"1rem",marginBottom:6}}>
+                <span style={{fontSize:13,fontWeight:500}}>History calendar</span>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <button style={S.btn} onClick={()=>{setLogCalOffset(o=>o+1);setLogCalSelectedDay(null);}}>‹</button>
+                  <span style={{fontSize:11,color:"var(--color-text-secondary)",minWidth:90,textAlign:"center"}}>{calMonthLabel(logCalDays)}</span>
+                  <button style={{...S.btn,opacity:logCalOffset===0?0.3:1}} disabled={logCalOffset===0} onClick={()=>{setLogCalOffset(o=>Math.max(0,o-1));setLogCalSelectedDay(null);}}>›</button>
                 </div>
-              ))}
-              <div style={S.secTitle}>History calendar</div>
+              </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
                 {calDayLabels.map(l=><div key={l} style={{textAlign:"center",fontSize:10,color:"var(--color-text-secondary)",paddingBottom:2}}>{l}</div>)}
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:"0.5rem"}}>
-                {calDays.map(d=>{
+                {logCalDays.map(d=>{
                   const sessionsOnDay = sessionsByDate[d]||[];
                   const hasSesh = sessionsOnDay.length>0;
                   const isToday = d===today;
@@ -974,8 +1010,10 @@ export default function GymBro() {
                               </span>
                             ))}
                           </div>
+                          {ex.note && <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:3}}>📝 {ex.note}</div>}
                         </div>
                       ))}
+                      {s.comment && <div style={{marginTop:8,paddingTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",fontSize:12,color:"var(--color-text-secondary)",fontStyle:"italic"}}>💬 {s.comment}</div>}
                     </div>
                   ))}
                 </div>
@@ -985,14 +1023,60 @@ export default function GymBro() {
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                 <span style={{fontSize:15,fontWeight:500}}>{activeSession.routineName}</span>
-                <button style={S.btn} onClick={()=>{setActiveSession(null);setEditSessionId(null);}}>Cancel</button>
+                <button style={S.btn} onClick={()=>{if(window.confirm("Cancel this session? All progress will be lost.")){setActiveSession(null);setEditSessionId(null);setShowCommentStep(false);setSessionComment("");setRestRunning(false);setRestRemaining(null);}}}>Cancel</button>
               </div>
+
+              {/* ── REST TIMER ── */}
+              {(()=>{
+                const done = restRemaining === 0;
+                const active = restRemaining !== null;
+                const mm = String(Math.floor((restRemaining??restDuration)/60)).padStart(2,"0");
+                const ss = String((restRemaining??restDuration)%60).padStart(2,"0");
+                const pct = active ? (restRemaining??0) / restDuration : 1;
+                return (
+                  <div style={{...S.card,marginBottom:12,borderColor: done ? "var(--color-accent)" : active ? "var(--color-border-secondary)" : "var(--color-border-tertiary)"}}>
+                    <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>Rest Timer</div>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                      <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+                        <span style={{fontSize:28,fontWeight:600,letterSpacing:2,color: done ? "var(--color-accent)" : restRunning ? "var(--color-text-primary)" : "var(--color-text-secondary)",fontVariantNumeric:"tabular-nums"}}>
+                          {mm}:{ss}
+                        </span>
+                        {done && <span style={{fontSize:12,color:"var(--color-accent)"}}>✓ Rest done!</span>}
+                      </div>
+                      <div style={{display:"flex",gap:6}}>
+                        <button style={S.btn} onClick={()=>{
+                          if (!active) { setRestRemaining(restDuration); setRestRunning(true); }
+                          else if (restRunning) { setRestRunning(false); }
+                          else { setRestRunning(true); }
+                        }}>
+                          {!active || done ? "▶ Start" : restRunning ? "⏸ Pause" : "▶ Resume"}
+                        </button>
+                        <button style={S.btn} onClick={()=>{ setRestRemaining(null); setRestRunning(false); }}>↺</button>
+                      </div>
+                    </div>
+                    <div style={{marginTop:8,height:4,borderRadius:2,background:"var(--color-background-secondary)"}}>
+                      <div style={{height:4,borderRadius:2,background: done ? "var(--color-accent)" : "var(--color-accent)",width:`${Math.round(pct*100)}%`,transition:"width 1s linear",opacity: done ? 1 : 0.6}}/>
+                    </div>
+                    <div style={{display:"flex",gap:6,marginTop:8}}>
+                      {[[60,"1:00"],[90,"1:30"],[120,"2:00"],[180,"3:00"]].map(([s,lbl])=>(
+                        <button key={s} style={{...S.btn,flex:1,fontSize:11,background:restDuration===s&&!active?"var(--color-background-secondary)":"none",color:restDuration===s?"var(--color-text-primary)":"var(--color-text-secondary)"}}
+                          onClick={()=>{ setRestDuration(s as number); setRestRemaining(null); setRestRunning(false); }}>{lbl}</button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               {activeSession.exercises.map((ex,ei)=>{
                 const pr=prs[ex.name];
                 const last=getLastTwo(userSessions.filter(s=>editSessionId?s.id!==editSessionId:true),ex.name)[0];
                 return (
                   <div key={ei} style={S.card}>
-                    <div style={{fontSize:14,fontWeight:500,marginBottom:4}}>{ex.name}</div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                      <div style={{fontSize:14,fontWeight:500}}>{ex.name}</div>
+                      <button style={{...S.btn,fontSize:11,color:"#A32D2D",padding:"2px 6px"}} onClick={()=>{
+                        setActiveSession(prev=>({...prev,exercises:prev.exercises.filter((_,i)=>i!==ei)}));
+                      }}>Remove</button>
+                    </div>
                     {ex.targetWeight && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:2}}>Target: {ex.targetSets}×{ex.targetReps} @ {ex.targetWeight} lbs</div>}
                     {pr && <div style={{fontSize:12,color:"#BA7517",marginBottom:4}}>PR: {pr.w} lbs × {pr.r}</div>}
                     {last && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:6}}>Last: {last.best} lbs</div>}
@@ -1011,18 +1095,52 @@ export default function GymBro() {
                         }}>✕</button>
                       </div>
                     ))}
-                    <button style={{...S.btn,fontSize:12,marginTop:2}} onClick={()=>{
-                      setActiveSession(prev=>{const exs=[...prev.exercises];exs[ei]={...exs[ei],sets:[...exs[ei].sets,{w:ex.sets[0]?.w||"",r:ex.sets[0]?.r||""}]};return {...prev,exercises:exs};});
-                    }}>+ Set</button>
+                    <div style={{display:"flex",gap:6,marginTop:2}}>
+                      <button style={{...S.btn,fontSize:12}} onClick={()=>{
+                        setActiveSession(prev=>{const exs=[...prev.exercises];exs[ei]={...exs[ei],sets:[...exs[ei].sets,{w:ex.sets[0]?.w||"",r:ex.sets[0]?.r||""}]};return {...prev,exercises:exs};});
+                      }}>+ Set</button>
+                      <button style={{...S.btn,fontSize:12}} onClick={()=>{ setRestRemaining(restDuration); setRestRunning(true); }}>⏱ Rest</button>
+                    </div>
+                    <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:6}}>
+                      <input
+                        type="text"
+                        value={ex.note||""}
+                        placeholder="📝 Machine notes (seat, pin, pad…)"
+                        style={{...S.input,fontSize:11,padding:"5px 8px",color:"var(--color-text-secondary)"}}
+                        onChange={e=>{
+                          setActiveSession(prev=>{const exs=[...prev.exercises];exs[ei]={...exs[ei],note:e.target.value};return {...prev,exercises:exs};});
+                        }}
+                      />
+                    </div>
                   </div>
                 );
               })}
               <AddExerciseInline onAdd={name=>{
-                setActiveSession(prev=>({...prev,exercises:[...prev.exercises,{name,sets:[{w:"",r:""}]}]}));
+                setActiveSession(prev=>({...prev,exercises:[...prev.exercises,{name,sets:[{w:"",r:""}],note:""}]}));
               }}/>
-              <button style={{...S.btnPrimary,width:"100%",marginTop:12}} onClick={saveSession}>
-                {editSessionId?"Save changes":"Finish session"}
-              </button>
+              {!showCommentStep ? (
+                <button style={{...S.btnPrimary,width:"100%",marginTop:12}} onClick={()=>setShowCommentStep(true)}>
+                  {editSessionId?"Save changes":"Finish session"}
+                </button>
+              ) : (
+                <div style={{...S.card,marginTop:12,borderColor:"var(--color-accent)"}}>
+                  <div style={{fontSize:13,fontWeight:500,marginBottom:8}}>Session comment <span style={{fontWeight:400,color:"var(--color-text-secondary)"}}>(optional)</span></div>
+                  <textarea
+                    value={sessionComment}
+                    onChange={e=>setSessionComment(e.target.value)}
+                    placeholder="How did it feel? Energy, injuries, notes…"
+                    rows={3}
+                    style={{...S.input,resize:"vertical",fontSize:12,lineHeight:1.5}}
+                    autoFocus
+                  />
+                  <div style={{display:"flex",gap:8,marginTop:8}}>
+                    <button style={{...S.btnPrimary,flex:1}} onClick={saveSession}>
+                      {editSessionId?"Save changes":"Save session"}
+                    </button>
+                    <button style={S.btn} onClick={()=>setShowCommentStep(false)}>Back</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
