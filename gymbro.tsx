@@ -359,6 +359,23 @@ const DEMO_ROUTINES = {
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────
 
+// ─── VOLUME HELPERS ───────────────────────────────────────────────────────
+// Volume = weight × reps, summed across all sets. Skips incomplete sets.
+function calcExVol(sets): number {
+  return sets.reduce((sum, s) => {
+    const w = parseFloat(s.w), r = parseFloat(s.r);
+    return sum + (isNaN(w)||isNaN(r) ? 0 : w * r);
+  }, 0);
+}
+// Total volume for a full session across all exercises
+function calcSessionVol(exercises): number {
+  return exercises.reduce((sum, ex) => sum + calcExVol(ex.sets), 0);
+}
+// Format a volume number compactly: 12,500 → "12.5k"
+function fmtVol(v: number): string {
+  return v >= 1000 ? `${(v/1000).toFixed(1)}k` : String(Math.round(v));
+}
+
 // Returns a map of { exerciseName → {w, r, date} } for all-time heaviest set per exercise
 function getPRs(sessions) {
   const prs = {};
@@ -897,6 +914,40 @@ export default function GymBro() {
             );
           })()}
 
+          {/* ── Volume trend chart — last 10 sessions as vertical bars ── */}
+          {userSessions.length > 0 && (()=>{
+            const recent = [...userSessions].slice(0,10).reverse(); // oldest → newest left to right
+            const vols = recent.map(s => calcSessionVol(s.exercises));
+            const maxVol = Math.max(...vols, 1);
+            return (
+              <div style={{marginTop:"1rem",marginBottom:"1rem"}}>
+                <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>Volume trend · last {recent.length} sessions</div>
+                <div style={{display:"flex",alignItems:"flex-end",gap:4,height:64}}>
+                  {recent.map((s,i)=>{
+                    const pct = vols[i] / maxVol;
+                    const barH = Math.max(4, Math.round(pct * 56)); // min 4px so bar is always visible
+                    return (
+                      <div key={s.id} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                        {/* Volume label above bar */}
+                        <span style={{fontSize:9,color:"var(--color-text-secondary)",lineHeight:1}}>{vols[i]>0?fmtVol(vols[i]):""}</span>
+                        {/* Bar */}
+                        <div style={{width:"100%",height:barH,borderRadius:"2px 2px 0 0",background:`var(--color-accent)`,opacity: 0.4 + pct * 0.6}}/>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Date labels below bars */}
+                <div style={{display:"flex",gap:4,marginTop:4}}>
+                  {recent.map(s=>{
+                    const d = new Date(s.date+"T12:00:00");
+                    const lbl = `${d.toLocaleDateString("en-US",{month:"short"})} ${d.getDate()}`;
+                    return <div key={s.id} style={{flex:1,fontSize:8,color:"var(--color-text-secondary)",textAlign:"center",overflow:"hidden"}}>{lbl}</div>;
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:"1rem",marginBottom:8}}>
             <span style={{fontSize:13,fontWeight:500}}>Top PRs</span>
             <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:4}}>
@@ -1104,9 +1155,17 @@ export default function GymBro() {
                   <div key={ei} style={S.card}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                       <div style={{fontSize:14,fontWeight:500}}>{ex.name}</div>
-                      <button style={{...S.btn,fontSize:11,color:"#A32D2D",padding:"2px 6px"}} onClick={()=>{
-                        setActiveSession(prev=>({...prev,exercises:prev.exercises.filter((_,i)=>i!==ei)}));
-                      }}>Remove</button>
+                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                        {/* Live volume for this exercise — only shown once at least one set has values */}
+                        {calcExVol(ex.sets) > 0 && (
+                          <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>
+                            {fmtVol(calcExVol(ex.sets))} lbs
+                          </span>
+                        )}
+                        <button style={{...S.btn,fontSize:11,color:"#A32D2D",padding:"2px 6px"}} onClick={()=>{
+                          setActiveSession(prev=>({...prev,exercises:prev.exercises.filter((_,i)=>i!==ei)}));
+                        }}>Remove</button>
+                      </div>
                     </div>
                     {ex.targetWeight && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:2}}>Target: {ex.targetSets}×{ex.targetReps} @ {ex.targetWeight} lbs</div>}
                     {pr && <div style={{fontSize:12,color:"#BA7517",marginBottom:4}}>PR: {pr.w} lbs × {pr.r}</div>}
@@ -1149,6 +1208,13 @@ export default function GymBro() {
               <AddExerciseInline onAdd={name=>{
                 setActiveSession(prev=>({...prev,exercises:[...prev.exercises,{name,sets:[{w:"",r:""}],note:""}]}));
               }}/>
+              {/* Session total volume summary */}
+              {calcSessionVol(activeSession.exercises) > 0 && (
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",marginTop:12,borderRadius:"var(--border-radius-md)",background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-tertiary)"}}>
+                  <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Total session volume</span>
+                  <span style={{fontSize:14,fontWeight:600,color:"var(--color-accent)"}}>{fmtVol(calcSessionVol(activeSession.exercises))} lbs</span>
+                </div>
+              )}
               {!showCommentStep ? (
                 <button style={{...S.btnPrimary,width:"100%",marginTop:12}} onClick={()=>setShowCommentStep(true)}>
                   {editSessionId?"Save changes":"Finish session"}
