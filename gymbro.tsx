@@ -696,6 +696,30 @@ function bmiCategory(bmi:number) {
   return               {label:"Obese",color:"#A32D2D"};
 }
 
+// Returns the ISO date string of the Monday of the week containing `dateStr`
+function getMondayOfWeek(dateStr:string):string {
+  const d = new Date(dateStr+"T12:00:00");
+  const day = d.getDay(); // 0=Sun
+  d.setDate(d.getDate() - (day===0 ? 6 : day-1));
+  return d.toISOString().split("T")[0];
+}
+
+// Given a program's cycleStartDate and cycleWeeks length, returns the 0-based index into cycleWeeks for today
+function getCycleWeekIndex(cycleStartDate:string, cycleLen:number):number {
+  const start = new Date(cycleStartDate+"T12:00:00");
+  const now = new Date(today+"T12:00:00");
+  const weeks = Math.floor((now.getTime()-start.getTime())/(7*24*60*60*1000));
+  return weeks % cycleLen;
+}
+
+// Count sessions for a program's routines in the calendar week starting on `weekMonday`
+function countProgramSessionsInWeek(allSessions:any[], progRoutineNames:Set<string>, weekMonday:string):number {
+  const d = new Date(weekMonday+"T12:00:00");
+  const weekEnd = new Date(d); weekEnd.setDate(d.getDate()+6);
+  const endStr = weekEnd.toISOString().split("T")[0];
+  return allSessions.filter(s=>s.date>=weekMonday && s.date<=endStr && (s.type==="strength"||!s.type) && progRoutineNames.has(s.routineName)).length;
+}
+
 const CARDIO_ACTIVITIES = ["Run","Walk","Bike","Swim","Row","HIIT","Jump Rope","Elliptical","Stairmaster","Yoga","Other"];
 
 const formInputStyle = {width:"100%",boxSizing:"border-box" as const,background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-sm)",padding:"8px 10px",color:"var(--color-text-primary)",fontFamily:"inherit",fontSize:13};
@@ -827,7 +851,7 @@ export default function GymBro() {
   // ── Routines UI state ──
   const [showArchived, setShowArchived] = useState(false);       // toggle archived routines visibility
   const [showNewProgram, setShowNewProgram] = useState(false);   // program creation form open
-  const [programForm, setProgramForm] = useState({name:"", routineIds:[] as string[]});  // new/edit program form
+  const [programForm, setProgramForm] = useState({name:"", routineIds:[] as string[], cycleActiveWeeks:3, cycleSessionsPerWeek:3, cycleHasRestWeek:true});  // new/edit program form
   const [editProgramId, setEditProgramId] = useState(null);      // non-null when renaming a program
   const [collapsedPrograms, setCollapsedPrograms] = useState<Record<string,boolean>>({});  // which programs are collapsed
   const [confirmDeleteProgramId, setConfirmDeleteProgramId] = useState(null); // confirm before deleting a program
@@ -1007,19 +1031,25 @@ export default function GymBro() {
   function saveProgram() {
     if (!programForm.name.trim()) return;
     const pid = editProgramId ?? ("p"+Date.now());
+    const cycleWeeks = [
+      ...Array.from({length:programForm.cycleActiveWeeks}, ()=>({type:"active" as const, sessions:programForm.cycleSessionsPerWeek})),
+      ...(programForm.cycleHasRestWeek ? [{type:"rest" as const, sessions:0}] : []),
+    ];
     if (editProgramId) {
-      setPrograms(prev=>({...prev,[uid]:prev[uid].map(p=>p.id===editProgramId?{...p,name:programForm.name.trim()}:p)}));
+      setPrograms(prev=>({...prev,[uid]:prev[uid].map(p=>p.id===editProgramId
+        ? {...p, name:programForm.name.trim(), cycleWeeks}
+        : p
+      )}));
       setEditProgramId(null);
     } else {
-      setPrograms(prev=>({...prev,[uid]:[...(prev[uid]||[]),{id:pid,name:programForm.name.trim()}]}));
+      setPrograms(prev=>({...prev,[uid]:[...(prev[uid]||[]),{id:pid, name:programForm.name.trim(), cycleWeeks, cycleStartDate:getMondayOfWeek(today)}]}));
     }
-    // Assign selected routines to this program (move them in; leave others unchanged)
     if (programForm.routineIds.length>0) {
       setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>
         programForm.routineIds.includes(r.id) ? {...r,programId:pid} : r
       )}));
     }
-    setProgramForm({name:"", routineIds:[]});
+    setProgramForm({name:"", routineIds:[], cycleActiveWeeks:3, cycleSessionsPerWeek:3, cycleHasRestWeek:true});
     setShowNewProgram(false);
   }
 
@@ -1292,6 +1322,28 @@ export default function GymBro() {
                       <div>
                         <div style={{fontSize:18,fontWeight:700,letterSpacing:"-0.01em"}}>{activeProg.name}</div>
                         <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>Active program · {activeProgRoutines.length} routine{activeProgRoutines.length!==1?"s":""}</div>
+                        {(()=>{
+                          if (!activeProg.cycleWeeks || !activeProg.cycleStartDate) return null;
+                          const cw = activeProg.cycleWeeks;
+                          const idx = getCycleWeekIndex(activeProg.cycleStartDate, cw.length);
+                          const week = cw[idx];
+                          const progNames = new Set(activeProgRoutines.map((r:any)=>r.name));
+                          const done = countProgramSessionsInWeek(userSessions, progNames, getMondayOfWeek(today));
+                          const target = week.sessions;
+                          const isRest = week.type==="rest";
+                          return (
+                            <div style={{marginTop:4,fontSize:12}}>
+                              {isRest
+                                ? <span style={{color:"var(--color-text-secondary)"}}>Week {idx+1}/{cw.length} · 😴 Rest week — take it easy</span>
+                                : <span>
+                                    <span style={{color:"var(--color-text-secondary)"}}>Week {idx+1}/{cw.length} · </span>
+                                    <span style={{fontWeight:600,color:done>=target?"var(--color-accent)":"var(--color-text-primary)"}}>{done}/{target} sessions</span>
+                                    <span style={{color:"var(--color-text-secondary)"}}>{done>=target?" done ✓":" this week"}</span>
+                                  </span>
+                              }
+                            </div>
+                          );
+                        })()}
                       </div>
                       <button style={S.btn} onClick={()=>setTab("routines")}>Switch</button>
                     </div>
@@ -1697,12 +1749,40 @@ export default function GymBro() {
                         <>
                           {/* Top row: name + collapse toggle */}
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-                            <div>
+                            <div style={{flex:1,minWidth:0}}>
                               <div style={{fontSize:16,fontWeight:700,letterSpacing:"-0.01em"}}>{prog.name}</div>
                               <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>
                                 {progRoutines.length} routine{progRoutines.length!==1?"s":""}
                                 {isActive && <span style={{marginLeft:8,fontSize:11,padding:"1px 7px",borderRadius:8,background:"var(--color-accent)",color:"#fff",fontWeight:500}}>Active</span>}
                               </div>
+                              {(()=>{
+                                if (!prog.cycleWeeks || !prog.cycleStartDate) return null;
+                                const cw = prog.cycleWeeks;
+                                const idx = getCycleWeekIndex(prog.cycleStartDate, cw.length);
+                                const week = cw[idx];
+                                const progNames = new Set(progRoutines.map((r:any)=>r.name));
+                                const monday = getMondayOfWeek(today);
+                                const done = countProgramSessionsInWeek(userSessions, progNames, monday);
+                                const target = week.sessions;
+                                const isRest = week.type==="rest";
+                                return (
+                                  <div style={{marginTop:6,fontSize:12}}>
+                                    <span style={{color:"var(--color-text-secondary)"}}>Week {idx+1}/{cw.length} · </span>
+                                    {isRest
+                                      ? <span style={{color:"var(--color-text-secondary)"}}>😴 Rest week</span>
+                                      : <>
+                                          <span style={{fontWeight:600,color:done>=target?"var(--color-accent)":"var(--color-text-primary)"}}>{done}/{target}</span>
+                                          <span style={{color:"var(--color-text-secondary)"}}> this week{done>=target?" ✓":""}</span>
+                                        </>
+                                    }
+                                    <div style={{display:"flex",gap:3,marginTop:4}}>
+                                      {cw.map((w:any,i:number)=>(
+                                        <div key={i} style={{height:4,flex:1,borderRadius:2,background:i<idx?"var(--color-accent)":i===idx?"var(--color-accent)88":"var(--color-background-secondary)",border:"0.5px solid var(--color-border-tertiary)"}} />
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </div>
                             <button style={{...S.btn,padding:"4px 10px",fontSize:12}} onClick={()=>setCollapsedPrograms(p=>({...p,[prog.id]:!p[prog.id]}))}>
                               {isCollapsed?"▶ Show":"▼ Hide"}
@@ -1711,7 +1791,8 @@ export default function GymBro() {
                           {/* Bottom row: uniform action buttons */}
                           <div style={{display:"flex",gap:6,flexWrap:"wrap" as const}}>
                             {!isActive && <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>setActiveProgramId(prog.id)}>Set active</button>}
-                            <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{setEditProgramId(prog.id);setProgramForm({name:prog.name,routineIds:[]});}}>Rename</button>
+                            {prog.cycleWeeks && <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>setPrograms(prev=>({...prev,[uid]:prev[uid].map(p=>p.id===prog.id?{...p,cycleStartDate:getMondayOfWeek(today)}:p)}))}>↺ Reset cycle</button>}
+                            <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{setEditProgramId(prog.id);setProgramForm({name:prog.name,routineIds:[],cycleActiveWeeks:prog.cycleWeeks?.filter((w:any)=>w.type==="active").length??3,cycleSessionsPerWeek:prog.cycleWeeks?.find((w:any)=>w.type==="active")?.sessions??3,cycleHasRestWeek:prog.cycleWeeks?.some((w:any)=>w.type==="rest")??true});}}>Rename</button>
                             <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{
                               setAddRoutinesProgramId(prog.id);
                               setAddRoutinesSelection([]);
@@ -1820,7 +1901,7 @@ export default function GymBro() {
 
               {/* ── New program form ── */}
               {showNewProgram && (()=>{
-                const availableRoutines = userRoutines.filter(r=>!r.archived);
+                const availableRoutines = userRoutines.filter(r=>!r.archived && !r.programId);
                 return (
                   <div style={{...S.card,marginBottom:16,borderColor:"var(--color-accent)"}}>
                     <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>New training program</div>
@@ -1850,6 +1931,26 @@ export default function GymBro() {
                         </div>
                       </>
                     )}
+                    <div style={S.label}>Weekly cycle</div>
+                    <div style={{...S.card,background:"var(--color-background-secondary)",padding:"10px 12px",marginBottom:12}}>
+                      <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:8,flexWrap:"wrap" as const}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <input type="number" min={1} max={12} style={{...S.input,width:52,marginBottom:0,padding:"5px 8px",textAlign:"center" as const}} value={programForm.cycleActiveWeeks} onChange={e=>setProgramForm(f=>({...f,cycleActiveWeeks:Math.max(1,Number(e.target.value))}))} />
+                          <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>active weeks ×</span>
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <input type="number" min={1} max={7} style={{...S.input,width:44,marginBottom:0,padding:"5px 8px",textAlign:"center" as const}} value={programForm.cycleSessionsPerWeek} onChange={e=>setProgramForm(f=>({...f,cycleSessionsPerWeek:Math.max(1,Number(e.target.value))}))} />
+                          <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>sessions/week</span>
+                        </div>
+                      </div>
+                      <label style={{display:"flex",alignItems:"center",gap:8,fontSize:12,cursor:"pointer"}}>
+                        <input type="checkbox" checked={programForm.cycleHasRestWeek} onChange={e=>setProgramForm(f=>({...f,cycleHasRestWeek:e.target.checked}))} style={{accentColor:"var(--color-accent)"}} />
+                        <span>Add a rest/deload week at end of cycle</span>
+                      </label>
+                      <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:8}}>
+                        Cycle: {programForm.cycleActiveWeeks} week{programForm.cycleActiveWeeks!==1?"s":""} × {programForm.cycleSessionsPerWeek} sessions{programForm.cycleHasRestWeek?" + 1 rest week":""} = {programForm.cycleActiveWeeks+(programForm.cycleHasRestWeek?1:0)} weeks total
+                      </div>
+                    </div>
                     <div style={{display:"flex",gap:8}}>
                       <button style={{...S.btnPrimary,flex:1}} onClick={saveProgram}>Create</button>
                       <button style={S.btn} onClick={()=>setShowNewProgram(false)}>Cancel</button>
