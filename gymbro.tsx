@@ -600,27 +600,33 @@ const THEMES: Record<string,{name:string,emoji:string,[k:string]:string}> = {
 // ─── STYLES ───────────────────────────────────────────────────────────────
 const S = {
   wrap: {fontFamily:"var(--font-mono)",color:"var(--color-text-primary)",maxWidth:540,margin:"0 auto",padding:"0 1rem 6rem"},
-  header: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1.25rem 0 0.75rem"},
-  logo: {fontSize:20,fontWeight:500},
-  tabs: {display:"flex",gap:2,borderBottom:"0.5px solid var(--color-border-tertiary)",marginBottom:"1.25rem",position:"relative"},
-  tabBtn: a=>({padding:"8px 12px",fontSize:12,background:"none",border:"none",borderBottom:a?"2px solid var(--color-text-primary)":"2px solid transparent",color:a?"var(--color-text-primary)":"var(--color-text-secondary)",cursor:"pointer",fontWeight:a?500:400,whiteSpace:"nowrap"}),
-  card: {background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1rem 1.25rem",marginBottom:10},
-  cardSec: {background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1rem 1.25rem",marginBottom:10},
-  label: {fontSize:12,color:"var(--color-text-secondary)",marginBottom:4,marginTop:10},
-  input: {width:"100%",boxSizing:"border-box",padding:"7px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13},
-  sm: {width:68,padding:"5px 8px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13},
-  btn: {padding:"6px 14px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"transparent",color:"var(--color-text-primary)",cursor:"pointer",fontSize:13},
-  btnPrimary: {padding:"7px 16px",borderRadius:"var(--border-radius-md)",border:"none",background:"var(--color-accent)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500},
+  header: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1.5rem 0 1rem"},
+  logo: {fontSize:22,fontWeight:600,letterSpacing:"-0.01em"},
+  tabs: {display:"flex",gap:2,marginBottom:"1.5rem",position:"relative",background:"var(--color-background-secondary)",borderRadius:"var(--border-radius-md)",padding:"4px 4px 0",border:"0.5px solid var(--color-border-tertiary)",overflowX:"auto" as const,scrollbarWidth:"none" as const},
+  tabBtn: a=>({padding:"13px 16px",background:a?"var(--color-background-primary)":"none",border:a?"0.5px solid var(--color-border-tertiary)":"0.5px solid transparent",borderBottom:a?"0.5px solid var(--color-background-primary)":"0.5px solid transparent",borderRadius:"var(--border-radius-sm) var(--border-radius-sm) 0 0",color:a?"var(--color-text-primary)":"var(--color-text-secondary)",cursor:"pointer",fontWeight:a?600:400,whiteSpace:"nowrap",textTransform:"uppercase",letterSpacing:"0.06em",fontSize:11,marginBottom:-1}),
+  // Primary card — main content blocks
+  card: {background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1.125rem 1.25rem",marginBottom:14},
+  // Secondary card — nested/sub content
+  cardSec: {background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"0.875rem 1rem",marginBottom:8},
+  // Form field label
+  label: {fontSize:12,color:"var(--color-text-secondary)",marginBottom:4,marginTop:14},
+  input: {width:"100%",boxSizing:"border-box",padding:"8px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13},
+  sm: {width:68,padding:"6px 8px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13},
+  btn: {padding:"7px 14px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"transparent",color:"var(--color-text-primary)",cursor:"pointer",fontSize:13},
+  btnPrimary: {padding:"8px 18px",borderRadius:"var(--border-radius-md)",border:"none",background:"var(--color-accent)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500},
   btnDanger: {padding:"6px 12px",borderRadius:"var(--border-radius-md)",border:"0.5px solid #A32D2D",background:"transparent",color:"#A32D2D",cursor:"pointer",fontSize:12},
   tag: c=>({fontSize:11,padding:"2px 8px",borderRadius:10,background:c+"22",color:c,fontWeight:500,display:"inline-block"}),
   prBadge: {fontSize:11,padding:"2px 7px",borderRadius:10,background:"#FAEEDA",color:"#BA7517",fontWeight:500},
-  metricRow: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:"1rem"},
-  metric: {background:"var(--color-background-secondary)",borderRadius:"var(--border-radius-md)",padding:"0.75rem",textAlign:"center"},
-  metricVal: {fontSize:22,fontWeight:500},
-  metricLbl: {fontSize:11,color:"var(--color-text-secondary)",marginTop:2},
+  metricRow: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:"1.25rem"},
+  metric: {background:"var(--color-background-secondary)",borderRadius:"var(--border-radius-md)",padding:"1rem",textAlign:"center"},
+  metricVal: {fontSize:24,fontWeight:600},
+  metricLbl: {fontSize:11,color:"var(--color-text-secondary)",marginTop:3},
   row: {display:"flex",gap:8,alignItems:"center"},
-  pill: (a,c)=>({padding:"4px 12px",borderRadius:20,border:`1.5px solid ${a?c:"var(--color-border-tertiary)"}`,background:a?c+"22":"transparent",color:a?c:"var(--color-text-secondary)",fontSize:13,cursor:"pointer",fontWeight:a?500:400}),
-  secTitle: {fontSize:11,fontWeight:600,letterSpacing:"0.08em",textTransform:"uppercase" as const,color:"var(--color-text-secondary)",marginBottom:10,marginTop:"1.75rem"},
+  pill: (a,c)=>({padding:"5px 13px",borderRadius:20,border:`1.5px solid ${a?c:"var(--color-border-tertiary)"}`,background:a?c+"22":"transparent",color:a?c:"var(--color-text-secondary)",fontSize:13,cursor:"pointer",fontWeight:a?500:400}),
+  // Major page section title — used for all top-level section headers within a tab
+  secTitle: {fontSize:13,fontWeight:700,letterSpacing:"0.04em",textTransform:"uppercase" as const,color:"var(--color-text-primary)",marginBottom:14,marginTop:"2.5rem",paddingBottom:10,borderBottom:"1px solid var(--color-border-tertiary)"},
+  // Sub-section label — small muted uppercase label within a card/form
+  subLabel: {fontSize:10,fontWeight:600,letterSpacing:"0.08em",textTransform:"uppercase" as const,color:"var(--color-text-secondary)",marginBottom:6},
 };
 
 // ─── STORAGE INIT ─────────────────────────────────────────────────────────
@@ -644,6 +650,26 @@ function cmToFtIn(cm:number) {
   const inches = cm/2.54, ft = Math.floor(inches/12);
   return `${ft}'${Math.round(inches%12)}"`;
 }
+// Convert cm to total inches (for measurements)
+function cmToInches(cm:number) { return Math.round(cm / 2.54 * 10) / 10; }
+// Convert inches to cm
+function inchesToCm(inches:number) { return Math.round(inches * 2.54 * 10) / 10; }
+// Display a stored-in-cm measurement in the current unit
+function displayMeasure(cm:number, unit:"metric"|"imperial") {
+  return unit==="imperial" ? `${cmToInches(cm)} in` : `${cm} cm`;
+}
+// Compute BMI from weight (kg) and height (cm)
+function calcBMI(weightKg:number, heightCm:number) {
+  if (!weightKg||!heightCm) return null;
+  const bmi = weightKg / Math.pow(heightCm/100, 2);
+  return Math.round(bmi * 10) / 10;
+}
+function bmiCategory(bmi:number) {
+  if (bmi<18.5) return {label:"Underweight",color:"#185FA5"};
+  if (bmi<25)   return {label:"Normal",color:"#3B6D11"};
+  if (bmi<30)   return {label:"Overweight",color:"#F0992B"};
+  return               {label:"Obese",color:"#A32D2D"};
+}
 
 // ─── APP ──────────────────────────────────────────────────────────────────
 // Single root component — all state lives here and is persisted to localStorage
@@ -662,15 +688,6 @@ export default function GymBro() {
 
   // ── Navigation ──
   const [tab, setTab] = useState("dashboard");
-  const [moreOpen, setMoreOpen] = useState(false);  // controls the "More ▾" dropdown
-  const moreRef = useRef<HTMLDivElement>(null);
-  // Close the More dropdown when clicking outside of it
-  useEffect(()=>{
-    if (!moreOpen) return;
-    const handler = (e:MouseEvent)=>{ if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false); };
-    document.addEventListener("mousedown", handler);
-    return ()=>document.removeEventListener("mousedown", handler);
-  },[moreOpen]);
 
   // ── Calculator state ──
   const [unit, setUnit] = useState("lbs");           // "lbs" or "kg"
@@ -731,6 +748,13 @@ export default function GymBro() {
   const [theme, setTheme] = useState(_saved?.theme ?? "matrix");
   const [profiles, setProfiles] = useState<Record<string,any>>(_saved?.profiles ?? {});
   const [profileWeightInput, setProfileWeightInput] = useState("");
+  const [profileHeightFt, setProfileHeightFt] = useState("");   // imperial height input (feet part)
+  const [profileHeightIn, setProfileHeightIn] = useState("");   // imperial height input (inches part)
+  const [profileMeasureForm, setProfileMeasureForm] = useState({waist:"",hips:"",chest:"",arm:"",bodyFat:""});
+  const [convHInput, setConvHInput] = useState("");             // converter: height input
+  const [convWInput, setConvWInput] = useState("");             // converter: weight input
+  const [convHDir, setConvHDir] = useState<"cmToIn"|"inToCm">("cmToIn");  // converter direction
+  const [convWDir, setConvWDir] = useState<"kgToLbs"|"lbsToKg">("kgToLbs");
 
   // ── Routine delete confirmation
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -923,26 +947,9 @@ export default function GymBro() {
       </div>
 
       <div style={S.tabs}>
-        {[["dashboard","Dashboard"],["log","Session"],["routines","Routines"],["calc","Calc"]].map(([id,lbl])=>(
-          <button key={id} style={S.tabBtn(tab===id)} onClick={()=>setTab(id)}>{lbl}</button>
+        {[["dashboard","Dashboard"],["log","Session"],["routines","Routines"],["calc","Calc"],["progress","Progress"],["db","Exercises"],["profile","Profile"]].map(([id,lbl])=>(
+          <button key={id} style={{...S.tabBtn(tab===id),flexShrink:0}} onClick={()=>setTab(id)}>{lbl}</button>
         ))}
-        <div ref={moreRef} style={{position:"relative",marginLeft:"auto"}}>
-          <button
-            style={S.tabBtn(["progress","db","profile"].includes(tab) || moreOpen)}
-            onClick={()=>setMoreOpen(o=>!o)}
-          >
-            {tab==="progress"?"Progress":tab==="db"?"Exercises":tab==="profile"?"Profile":"More"} ▾
-          </button>
-          {moreOpen && (
-            <div style={{position:"absolute",right:0,top:"100%",background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",zIndex:100,minWidth:120,boxShadow:"0 4px 16px rgba(0,0,0,0.4)"}}>
-              {[["progress","Progress"],["db","Exercises"],["profile","Profile"]].map(([id,lbl])=>(
-                <button key={id} onClick={()=>{setTab(id);setMoreOpen(false);}} style={{display:"block",width:"100%",textAlign:"left",padding:"9px 14px",fontSize:12,background:tab===id?"var(--color-background-secondary)":"none",border:"none",color:tab===id?"var(--color-text-primary)":"var(--color-text-secondary)",cursor:"pointer",fontFamily:"var(--font-mono)"}}>
-                  {lbl}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* ── DASHBOARD ── */}
@@ -953,8 +960,8 @@ export default function GymBro() {
             <div style={{...S.metric,cursor:"pointer"}} onClick={()=>setTab("progress")}><div style={S.metricVal}>{Object.keys(prs).length}</div><div style={S.metricLbl}>PRs</div></div>
             <div style={{...S.metric,cursor:"pointer"}} onClick={()=>setTab("routines")}><div style={S.metricVal}>{userRoutines.length}</div><div style={S.metricLbl}>routines</div></div>
           </div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"1rem",marginBottom:6}}>
-            <span style={{fontSize:13,fontWeight:500}}>Calendar</span>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",...S.secTitle}}>
+            <span>Calendar</span>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <button style={S.btn} onClick={()=>{setCalOffset(o=>o+1);setCalSelectedDay(null);}}>‹</button>
               <span style={{fontSize:11,color:"var(--color-text-secondary)",minWidth:90,textAlign:"center"}}>{calMonthLabel(calDays)}</span>
@@ -1023,7 +1030,7 @@ export default function GymBro() {
             }));
             const maxSets = Math.max(...Object.values(muscleSets), 1);
             return (
-              <div style={{marginTop:"1rem",marginBottom:"1rem"}}>
+              <div style={{marginTop:0,marginBottom:"0.75rem"}}>
                 <div style={{fontSize:13,fontWeight:500,marginBottom:8}}>Muscle focus · last 6 sessions</div>
                 {ALL_MUSCLES.map(muscle=>{
                   const count = muscleSets[muscle] || 0;
@@ -1057,7 +1064,7 @@ export default function GymBro() {
             const vols = recent.map(s => calcSessionVol(s.exercises));
             const maxVol = Math.max(...vols, 1);
             return (
-              <div style={{marginTop:"1rem",marginBottom:"1rem"}}>
+              <div style={{marginTop:0,marginBottom:"0.75rem"}}>
                 <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>Volume trend · last {recent.length} sessions</div>
                 <div style={{display:"flex",alignItems:"flex-end",gap:4,height:64}}>
                   {recent.map((s,i)=>{
@@ -1085,7 +1092,7 @@ export default function GymBro() {
             );
           })()}
 
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:"1rem",marginBottom:8}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",...S.secTitle,paddingBottom:8}}>
             <span style={{fontSize:13,fontWeight:500}}>Top PRs</span>
             <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:4}}>
               <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>heaviest set · e1RM = Epley</span>
@@ -1141,8 +1148,8 @@ export default function GymBro() {
                     {/* Program header */}
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                       <div>
-                        <div style={{fontSize:16,fontWeight:600}}>{activeProg.name}</div>
-                        <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>Active program · {activeProgRoutines.length} routine{activeProgRoutines.length!==1?"s":""}</div>
+                        <div style={{fontSize:18,fontWeight:700,letterSpacing:"-0.01em"}}>{activeProg.name}</div>
+                        <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>Active program · {activeProgRoutines.length} routine{activeProgRoutines.length!==1?"s":""}</div>
                       </div>
                       <button style={S.btn} onClick={()=>setTab("routines")}>Switch</button>
                     </div>
@@ -1167,7 +1174,7 @@ export default function GymBro() {
                 ) : (
                   /* No active program — show freestyle + nudge + standalone routines */
                   <div style={{marginBottom:20}}>
-                    <div style={{fontSize:16,fontWeight:600,marginBottom:10}}>Start a session</div>
+                    <div style={{...S.secTitle,marginTop:0,borderBottom:"none",paddingBottom:0,marginBottom:14}}>Start a session</div>
                     <button style={{...S.btnPrimary,marginBottom:10,width:"100%"}} onClick={()=>startSession(null)}>+ Freestyle session</button>
                     {(programs[uid]||[]).length>0 && (
                       <div style={{...S.card,fontSize:13,color:"var(--color-text-secondary)",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -1223,8 +1230,8 @@ export default function GymBro() {
                   </div>
                 );
               })}
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"1rem",marginBottom:6}}>
-                <span style={{fontSize:13,fontWeight:500}}>History calendar</span>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",...S.secTitle}}>
+                <span>History calendar</span>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <button style={S.btn} onClick={()=>{setLogCalOffset(o=>o+1);setLogCalSelectedDay(null);}}>‹</button>
                   <span style={{fontSize:11,color:"var(--color-text-secondary)",minWidth:90,textAlign:"center"}}>{calMonthLabel(logCalDays)}</span>
@@ -1470,8 +1477,8 @@ export default function GymBro() {
               {/* ═══════════════════════════════════════
                   PROGRAMS SECTION
               ═══════════════════════════════════════ */}
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <div style={{fontSize:16,fontWeight:600}}>Programs</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",...S.secTitle,marginTop:0}}>
+                <span>Programs</span>
                 <button style={S.btn} onClick={()=>{setProgramForm({name:"",routineIds:[]});setEditProgramId(null);setShowNewProgram(true);}}>+ New program</button>
               </div>
 
@@ -1489,41 +1496,50 @@ export default function GymBro() {
                 return (
                   <div key={prog.id} style={{...S.card,marginBottom:12,padding:0,overflow:"hidden",borderColor:isActive?"var(--color-accent)":undefined,borderWidth:isActive?1.5:undefined}}>
                     {/* Program header */}
-                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",background:"var(--color-bg-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
-                      <button style={{...S.btn,padding:"2px 6px",fontSize:13}} onClick={()=>setCollapsedPrograms(p=>({...p,[prog.id]:!p[prog.id]}))}>
-                        {isCollapsed?"▶":"▼"}
-                      </button>
+                    <div style={{padding:"12px 14px",background:"var(--color-bg-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
                       {isEditingName ? (
-                        <>
+                        /* Inline rename form */
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
                           <input autoFocus value={programForm.name} onChange={e=>setProgramForm(f=>({...f,name:e.target.value}))}
                             onKeyDown={e=>{if(e.key==="Enter")saveProgram();if(e.key==="Escape")setEditProgramId(null);}}
-                            style={{...S.input,flex:1,marginBottom:0,padding:"3px 8px",fontSize:14}} />
+                            style={{...S.input,flex:1,marginBottom:0,padding:"5px 10px",fontSize:15}} />
                           <button style={S.btnPrimary} onClick={saveProgram}>Save</button>
                           <button style={S.btn} onClick={()=>setEditProgramId(null)}>Cancel</button>
-                        </>
+                        </div>
                       ) : (
                         <>
-                          <span style={{flex:1,fontSize:15,fontWeight:600}}>{prog.name}</span>
-                          {isActive
-                            ? <span style={{fontSize:11,padding:"2px 8px",borderRadius:8,background:"var(--color-accent)",color:"#fff",fontWeight:500}}>Active</span>
-                            : <button style={S.btn} onClick={()=>setActiveProgramId(prog.id)}>Set active</button>
-                          }
-                          <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{progRoutines.length} routine{progRoutines.length!==1?"s":""}</span>
-                          <button style={S.btn} onClick={()=>{setEditProgramId(prog.id);setProgramForm({name:prog.name,routineIds:[]});}}>Rename</button>
-                          <button style={S.btn} onClick={()=>{
-                            setAddRoutinesProgramId(prog.id);
-                            setAddRoutinesSelection([]);
-                            setCollapsedPrograms(p=>({...p,[prog.id]:false})); // expand so picker is visible
-                          }}>+ Add routines</button>
-                          {confirmDeleteProgramId===prog.id ? (
-                            <>
-                              <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Delete?</span>
-                              <button style={S.btnDanger} onClick={()=>deleteProgram(prog.id)}>Yes</button>
-                              <button style={S.btn} onClick={()=>setConfirmDeleteProgramId(null)}>No</button>
-                            </>
-                          ) : (
-                            <button style={S.btnDanger} onClick={()=>setConfirmDeleteProgramId(prog.id)}>Delete</button>
-                          )}
+                          {/* Top row: name + collapse toggle */}
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                            <div>
+                              <div style={{fontSize:16,fontWeight:700,letterSpacing:"-0.01em"}}>{prog.name}</div>
+                              <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>
+                                {progRoutines.length} routine{progRoutines.length!==1?"s":""}
+                                {isActive && <span style={{marginLeft:8,fontSize:11,padding:"1px 7px",borderRadius:8,background:"var(--color-accent)",color:"#fff",fontWeight:500}}>Active</span>}
+                              </div>
+                            </div>
+                            <button style={{...S.btn,padding:"4px 10px",fontSize:12}} onClick={()=>setCollapsedPrograms(p=>({...p,[prog.id]:!p[prog.id]}))}>
+                              {isCollapsed?"▶ Show":"▼ Hide"}
+                            </button>
+                          </div>
+                          {/* Bottom row: uniform action buttons */}
+                          <div style={{display:"flex",gap:6,flexWrap:"wrap" as const}}>
+                            {!isActive && <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>setActiveProgramId(prog.id)}>Set active</button>}
+                            <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{setEditProgramId(prog.id);setProgramForm({name:prog.name,routineIds:[]});}}>Rename</button>
+                            <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{
+                              setAddRoutinesProgramId(prog.id);
+                              setAddRoutinesSelection([]);
+                              setCollapsedPrograms(p=>({...p,[prog.id]:false}));
+                            }}>+ Add routines</button>
+                            {confirmDeleteProgramId===prog.id ? (
+                              <>
+                                <span style={{fontSize:12,color:"var(--color-text-secondary)",alignSelf:"center"}}>Sure?</span>
+                                <button style={{...S.btnDanger,fontSize:12,padding:"5px 12px"}} onClick={()=>deleteProgram(prog.id)}>Yes, delete</button>
+                                <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>setConfirmDeleteProgramId(null)}>Cancel</button>
+                              </>
+                            ) : (
+                              <button style={{...S.btnDanger,fontSize:12,padding:"5px 12px"}} onClick={()=>setConfirmDeleteProgramId(prog.id)}>Delete</button>
+                            )}
+                          </div>
                         </>
                       )}
                     </div>
@@ -1578,32 +1594,35 @@ export default function GymBro() {
                         )}
                         {progRoutines.map(r=>(
                           <div key={r.id} style={S.cardSec}>
-                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                              <span style={{fontSize:14,fontWeight:500}}>{r.name}</span>
-                              <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap" as const,justifyContent:"flex-end" as const}}>
-                                {confirmDeleteId===r.id ? (
-                                  <>
-                                    <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Sure?</span>
-                                    <button style={S.btnDanger} onClick={()=>{deleteRoutine(r.id);setConfirmDeleteId(null);}}>Yes</button>
-                                    <button style={S.btn} onClick={()=>setConfirmDeleteId(null)}>No</button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button style={S.btnPrimary} onClick={()=>startSession(r)}>▶ Start</button>
-                                    <button style={S.btn} onClick={()=>editRoutine(r)}>Edit</button>
-                                    <button style={S.btn} onClick={()=>duplicateRoutine(r)}>Copy</button>
-                                    <button style={S.btn} onClick={()=>archiveRoutine(r.id)}>Archive</button>
-                                    <button style={S.btnDanger} onClick={()=>setConfirmDeleteId(r.id)}>Delete</button>
-                                  </>
-                                )}
-                              </div>
+                            {/* Top row: name + Start */}
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                              <span style={{fontSize:14,fontWeight:600}}>{r.name}</span>
+                              <button style={S.btnPrimary} onClick={()=>startSession(r)}>▶ Start</button>
                             </div>
+                            {/* Exercise list */}
                             {r.exercises.map((e,i)=>(
                               <div key={i} style={{fontSize:12,display:"flex",justifyContent:"space-between",marginBottom:2,color:"var(--color-text-secondary)"}}>
                                 <span style={{color:"var(--color-text-primary)"}}>{e.name}</span>
                                 <span>{e.sets} × {e.reps} @ {e.weight} lbs</span>
                               </div>
                             ))}
+                            {/* Bottom row: secondary actions */}
+                            <div style={{display:"flex",gap:6,marginTop:10,paddingTop:8,borderTop:"0.5px solid var(--color-border-tertiary)"}}>
+                              {confirmDeleteId===r.id ? (
+                                <>
+                                  <span style={{fontSize:12,color:"var(--color-text-secondary)",alignSelf:"center"}}>Sure?</span>
+                                  <button style={{...S.btnDanger,fontSize:12,padding:"4px 10px"}} onClick={()=>{deleteRoutine(r.id);setConfirmDeleteId(null);}}>Yes, delete</button>
+                                  <button style={{...S.btn,fontSize:12,padding:"4px 10px"}} onClick={()=>setConfirmDeleteId(null)}>Cancel</button>
+                                </>
+                              ) : (
+                                <>
+                                  <button style={{...S.btn,fontSize:12,padding:"4px 10px"}} onClick={()=>editRoutine(r)}>Edit</button>
+                                  <button style={{...S.btn,fontSize:12,padding:"4px 10px"}} onClick={()=>duplicateRoutine(r)}>Copy</button>
+                                  <button style={{...S.btn,fontSize:12,padding:"4px 10px"}} onClick={()=>archiveRoutine(r.id)}>Archive</button>
+                                  <button style={{...S.btnDanger,fontSize:12,padding:"4px 10px"}} onClick={()=>setConfirmDeleteId(r.id)}>Delete</button>
+                                </>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1655,8 +1674,8 @@ export default function GymBro() {
               {/* ═══════════════════════════════════════
                   STANDALONE ROUTINES SECTION
               ═══════════════════════════════════════ */}
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"20px 0 10px"}}>
-                <div style={{fontSize:16,fontWeight:600}}>Standalone routines</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",...S.secTitle}}>
+                <span>Standalone routines</span>
                 <button style={S.btnPrimary} onClick={()=>{setRoutineForm({name:"",exercises:[],programId:""});setEditRoutineId(null);setShowNewRoutine(true);}}>+ New routine</button>
               </div>
 
@@ -1670,32 +1689,35 @@ export default function GymBro() {
                   <div style={{display:"flex",flexDirection:"column",gap:8}}>
                     {standalone.map(r=>(
                       <div key={r.id} style={S.card}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                          <span style={{fontSize:15,fontWeight:500}}>{r.name}</span>
-                          <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap" as const,justifyContent:"flex-end" as const}}>
-                            {confirmDeleteId===r.id ? (
-                              <>
-                                <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Sure?</span>
-                                <button style={S.btnDanger} onClick={()=>{deleteRoutine(r.id);setConfirmDeleteId(null);}}>Yes</button>
-                                <button style={S.btn} onClick={()=>setConfirmDeleteId(null)}>No</button>
-                              </>
-                            ) : (
-                              <>
-                                <button style={S.btnPrimary} onClick={()=>startSession(r)}>▶ Start</button>
-                                <button style={S.btn} onClick={()=>editRoutine(r)}>Edit</button>
-                                <button style={S.btn} onClick={()=>duplicateRoutine(r)}>Copy</button>
-                                <button style={S.btn} onClick={()=>archiveRoutine(r.id)}>Archive</button>
-                                <button style={S.btnDanger} onClick={()=>setConfirmDeleteId(r.id)}>Delete</button>
-                              </>
-                            )}
-                          </div>
+                        {/* Top row: name + Start */}
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                          <span style={{fontSize:15,fontWeight:600}}>{r.name}</span>
+                          <button style={S.btnPrimary} onClick={()=>startSession(r)}>▶ Start</button>
                         </div>
+                        {/* Exercise list */}
                         {r.exercises.map((e,i)=>(
                           <div key={i} style={{fontSize:13,display:"flex",justifyContent:"space-between",marginBottom:2,color:"var(--color-text-secondary)"}}>
                             <span style={{color:"var(--color-text-primary)"}}>{e.name}</span>
                             <span>{e.sets} × {e.reps} reps @ {e.weight} lbs</span>
                           </div>
                         ))}
+                        {/* Bottom row: secondary actions */}
+                        <div style={{display:"flex",gap:6,marginTop:10,paddingTop:8,borderTop:"0.5px solid var(--color-border-tertiary)"}}>
+                          {confirmDeleteId===r.id ? (
+                            <>
+                              <span style={{fontSize:12,color:"var(--color-text-secondary)",alignSelf:"center"}}>Sure?</span>
+                              <button style={{...S.btnDanger,fontSize:12,padding:"4px 10px"}} onClick={()=>{deleteRoutine(r.id);setConfirmDeleteId(null);}}>Yes, delete</button>
+                              <button style={{...S.btn,fontSize:12,padding:"4px 10px"}} onClick={()=>setConfirmDeleteId(null)}>Cancel</button>
+                            </>
+                          ) : (
+                            <>
+                              <button style={{...S.btn,fontSize:12,padding:"4px 10px"}} onClick={()=>editRoutine(r)}>Edit</button>
+                              <button style={{...S.btn,fontSize:12,padding:"4px 10px"}} onClick={()=>duplicateRoutine(r)}>Copy</button>
+                              <button style={{...S.btn,fontSize:12,padding:"4px 10px"}} onClick={()=>archiveRoutine(r.id)}>Archive</button>
+                              <button style={{...S.btnDanger,fontSize:12,padding:"4px 10px"}} onClick={()=>setConfirmDeleteId(r.id)}>Delete</button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1748,7 +1770,7 @@ export default function GymBro() {
                   </select>
                 </>
               )}
-              <div style={{...S.secTitle,marginTop:12}}>Exercises</div>
+              <div style={{...S.secTitle,marginTop:"1.5rem",fontSize:11,letterSpacing:"0.08em"}}>Exercises</div>
               {routineForm.exercises.map((ex,i)=>(
                 <div key={i} style={{...S.cardSec,marginBottom:6}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
@@ -1856,7 +1878,7 @@ export default function GymBro() {
             </div>
           </div>
 
-          <div style={{fontSize:13,fontWeight:500,marginTop:"1.25rem",marginBottom:8}}>My plates ({unit})</div>
+          <div style={S.secTitle}>My plates ({unit})</div>
           <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:4}}>
             {allPlates.map(p=>{
               const pairs = getPairs(p);
@@ -1888,13 +1910,13 @@ export default function GymBro() {
           <input value={dbSearch} onChange={e=>setDbSearch(e.target.value)} placeholder="Search exercises..." style={{...S.input,marginBottom:12}}/>
 
           {/* Equipment filter pills */}
-          <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:4}}>Equipment</div>
+          <div style={S.subLabel}>Equipment</div>
           <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
             {EQ_TYPES.map(t=><button key={t} style={S.pill(dbEq===t,"var(--color-accent)")} onClick={()=>setDbEq(t)}>{t}</button>)}
           </div>
 
           {/* Muscle group filter pills */}
-          <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:4}}>Muscle group</div>
+          <div style={S.subLabel}>Muscle group</div>
           <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}}>
             {["All","Chest","Back","Shoulders","Traps","Biceps","Triceps","Forearms","Abs","Core","Quads","Hamstrings","Glutes","Adductors","Abductors","Calves","Neck"].map(m=>(
               <button key={m} style={S.pill(dbMuscle===m,"#534AB7")} onClick={()=>setDbMuscle(m)}>{m}</button>
@@ -1975,6 +1997,7 @@ export default function GymBro() {
         const profile = profiles[uid] || {};
         const age = calcAge(profile.birthDate);
         const weightUnit = profile.weightUnit || "lbs";
+        const measureUnit: "metric"|"imperial" = profile.measureUnit || "metric";
         const weights: any[] = profile.weights || [];
         const lastWeight = weights[weights.length-1];
         const prevWeight = weights[weights.length-2];
@@ -1992,47 +2015,97 @@ export default function GymBro() {
 
         return (
           <div>
+            {/* ── Unit system ── */}
+            <div style={S.secTitle}>Unit system</div>
+            <div style={S.card}>
+              <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:10}}>Controls how all body measurements are displayed and entered.</div>
+              <div style={{display:"flex",gap:8}}>
+                {(["metric","imperial"] as const).map(u=>(
+                  <button key={u} style={{...S.pill(measureUnit===u,"var(--color-accent)"),flex:1,textAlign:"center" as const}}
+                    onClick={()=>saveProfile({measureUnit:u})}>
+                    {u==="metric"?"⚖️ Metric (kg, cm)":"🇺🇸 Imperial (lbs, in)"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Personal info ── */}
             <div style={S.secTitle}>Personal info</div>
             <div style={S.card}>
               <div style={{marginBottom:12}}>
                 <div style={S.label}>Name</div>
-                <div style={{fontSize:14,color:"var(--color-text-primary)"}}>{loggedIn.name}</div>
+                <div style={{fontSize:14}}>{loggedIn.name}</div>
               </div>
-              <div style={{display:"flex",gap:12,marginBottom:12}}>
-                <div style={{flex:1}}>
-                  <div style={S.label}>Birth date</div>
-                  <input type="date" value={profile.birthDate||""} onChange={e=>saveProfile({birthDate:e.target.value})} style={S.input}/>
+              <div style={{marginBottom:12}}>
+                <div style={{...S.label,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>Birth date</span>
+                  {age && <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)"}}>{age} yrs</span>}
                 </div>
-                <div style={{flex:1}}>
-                  <div style={S.label}>Age</div>
-                  <div style={{fontSize:22,fontWeight:500,paddingTop:8}}>{age ?? "—"}</div>
-                </div>
+                <input type="date" value={profile.birthDate||""} onChange={e=>saveProfile({birthDate:e.target.value})} style={S.input}/>
               </div>
-              <div style={{display:"flex",gap:12}}>
-                <div style={{flex:2}}>
-                  <div style={S.label}>Height (cm)</div>
-                  <input type="text" inputMode="decimal" value={profile.height||""} onChange={e=>saveProfile({height:e.target.value})} placeholder="e.g. 178" style={S.input}/>
-                </div>
-                <div style={{flex:1}}>
-                  <div style={S.label}>Display</div>
-                  <div style={{fontSize:14,paddingTop:10,color:"var(--color-text-secondary)"}}>
+              {/* Height — input changes by unit */}
+              <div style={S.label}>Height</div>
+              {measureUnit==="metric" ? (
+                <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                  <input type="text" inputMode="decimal" value={profile.height||""} onChange={e=>saveProfile({height:e.target.value})} placeholder="cm" style={{...S.input,flex:1}}/>
+                  <span style={{fontSize:13,color:"var(--color-text-secondary)",whiteSpace:"nowrap" as const}}>
                     {profile.height ? cmToFtIn(parseFloat(profile.height)) : "—"}
-                  </div>
+                  </span>
                 </div>
-              </div>
+              ) : (
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <input type="text" inputMode="decimal" value={profileHeightFt} placeholder="ft"
+                    style={{...S.input,width:72,flex:"none"}}
+                    onChange={e=>{ setProfileHeightFt(e.target.value); }}
+                    onBlur={()=>{
+                      const ft=parseFloat(profileHeightFt), inches=parseFloat(profileHeightIn||"0");
+                      if (!isNaN(ft)) saveProfile({height:String(Math.round(inchesToCm(ft*12+inches)*10)/10)});
+                    }}/>
+                  <input type="text" inputMode="decimal" value={profileHeightIn} placeholder="in"
+                    style={{...S.input,width:72,flex:"none"}}
+                    onChange={e=>setProfileHeightIn(e.target.value)}
+                    onBlur={()=>{
+                      const ft=parseFloat(profileHeightFt||"0"), inches=parseFloat(profileHeightIn);
+                      if (!isNaN(inches)) saveProfile({height:String(Math.round(inchesToCm(ft*12+inches)*10)/10)});
+                    }}/>
+                  <span style={{fontSize:13,color:"var(--color-text-secondary)",whiteSpace:"nowrap" as const}}>
+                    {profile.height ? `${parseFloat(profile.height)} cm` : "—"}
+                  </span>
+                </div>
+              )}
+              {/* BMI if we have weight + height */}
+              {(()=>{
+                const lastW = weights[weights.length-1];
+                const heightCm = parseFloat(profile.height);
+                const weightKg = lastW ? (weightUnit==="lbs" ? lastW.value*0.453592 : lastW.value) : null;
+                const bmi = weightKg&&heightCm ? calcBMI(weightKg, heightCm) : null;
+                const cat = bmi ? bmiCategory(bmi) : null;
+                return bmi ? (
+                  <div style={{marginTop:12,display:"flex",alignItems:"center",gap:12}}>
+                    <div>
+                      <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:2}}>BMI</div>
+                      <div style={{fontSize:22,fontWeight:600}}>{bmi}</div>
+                    </div>
+                    <div style={{fontSize:12,padding:"3px 10px",borderRadius:8,background:cat!.color+"22",color:cat!.color,fontWeight:500}}>{cat!.label}</div>
+                  </div>
+                ) : null;
+              })()}
             </div>
 
+            {/* ── Weight tracking ── */}
             <div style={S.secTitle}>Weight tracking</div>
             <div style={S.card}>
               <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:12}}>
                 {["lbs","kg"].map(u=><button key={u} style={S.pill(weightUnit===u,"var(--color-accent)")} onClick={()=>saveProfile({weightUnit:u})}>{u}</button>)}
               </div>
               <div style={{display:"flex",gap:8,marginBottom:12}}>
-                <input type="text" inputMode="decimal" value={profileWeightInput} onChange={e=>setProfileWeightInput(e.target.value)} placeholder={`Weight in ${weightUnit}`} style={{...S.input,margin:0}}/>
+                <input type="text" inputMode="decimal" value={profileWeightInput} onChange={e=>setProfileWeightInput(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&addWeight()}
+                  placeholder={`Weight in ${weightUnit}`} style={{...S.input,margin:0}}/>
                 <button style={S.btnPrimary} onClick={addWeight}>Log</button>
               </div>
               {lastWeight && (
-                <div style={{display:"flex",gap:16,marginBottom:12}}>
+                <div style={{display:"flex",gap:16,marginBottom:12,flexWrap:"wrap" as const}}>
                   <div>
                     <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:2}}>CURRENT</div>
                     <div style={{fontSize:22,fontWeight:500}}>{lastWeight.value} <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{weightUnit}</span></div>
@@ -2064,6 +2137,153 @@ export default function GymBro() {
               )}
             </div>
 
+            {/* ── Body measurements ── */}
+            <div style={S.secTitle}>Body measurements</div>
+            <div style={S.card}>
+              <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:14}}>
+                Stored in cm · displayed in {measureUnit==="imperial"?"inches":"cm"}
+              </div>
+              {/* Log form */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+                {([
+                  ["waist","Waist"],["hips","Hips"],["chest","Chest"],["arm","Bicep (flexed)"]
+                ] as [string,string][]).map(([key,label])=>(
+                  <div key={key}>
+                    <div style={S.label}>{label} ({measureUnit==="imperial"?"in":"cm"})</div>
+                    <input type="text" inputMode="decimal"
+                      value={(profileMeasureForm as any)[key]}
+                      onChange={e=>setProfileMeasureForm(f=>({...f,[key]:e.target.value}))}
+                      placeholder={measureUnit==="imperial"?"e.g. 32":"e.g. 81"}
+                      style={S.input}/>
+                  </div>
+                ))}
+              </div>
+              <div style={{marginBottom:12}}>
+                <div style={S.label}>Body fat %</div>
+                <input type="text" inputMode="decimal"
+                  value={profileMeasureForm.bodyFat}
+                  onChange={e=>setProfileMeasureForm(f=>({...f,bodyFat:e.target.value}))}
+                  placeholder="e.g. 18" style={{...S.input,maxWidth:160}}/>
+              </div>
+              <button style={{...S.btnPrimary,width:"100%"}} onClick={()=>{
+                const toStore = (v:string) => {
+                  const n = parseFloat(v);
+                  if (isNaN(n)||n<=0) return undefined;
+                  // Convert imperial input (inches) to cm for storage
+                  return measureUnit==="imperial" ? inchesToCm(n) : n;
+                };
+                const bf = parseFloat(profileMeasureForm.bodyFat);
+                const entry:any = {date:today};
+                const w = toStore(profileMeasureForm.waist);   if(w)   entry.waist=w;
+                const h = toStore(profileMeasureForm.hips);    if(h)   entry.hips=h;
+                const c = toStore(profileMeasureForm.chest);   if(c)   entry.chest=c;
+                const a = toStore(profileMeasureForm.arm);     if(a)   entry.arm=a;
+                if(!isNaN(bf)&&bf>0) entry.bodyFat=bf;
+                if (Object.keys(entry).length>1) {
+                  saveProfile({bodyMeasurements:[...(profile.bodyMeasurements||[]),entry]});
+                  setProfileMeasureForm({waist:"",hips:"",chest:"",arm:"",bodyFat:""});
+                }
+              }}>Log measurements</button>
+
+              {/* Latest measurements display */}
+              {(()=>{
+                const history:any[] = profile.bodyMeasurements||[];
+                if (history.length===0) return null;
+                // Latest value for each metric
+                const latest = (key:string) => {
+                  for (let i=history.length-1;i>=0;i--) if(history[i][key]!=null) return history[i][key];
+                  return null;
+                };
+                const fields = [
+                  {key:"waist",label:"Waist"},{key:"hips",label:"Hips"},
+                  {key:"chest",label:"Chest"},{key:"arm",label:"Bicep"},
+                  {key:"bodyFat",label:"Body fat",unit:"%"},
+                ];
+                return (
+                  <div style={{marginTop:16}}>
+                    <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:8}}>LATEST</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                      {fields.map(f=>{
+                        const v = latest(f.key);
+                        if (v==null) return null;
+                        const display = f.unit==="%" ? `${v}%` : displayMeasure(v, measureUnit);
+                        return (
+                          <div key={f.key} style={{background:"var(--color-background-secondary)",borderRadius:"var(--border-radius-md)",padding:"10px 12px"}}>
+                            <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:4}}>{f.label.toUpperCase()}</div>
+                            <div style={{fontSize:16,fontWeight:600}}>{display}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Recent history */}
+                    <div style={{fontSize:11,color:"var(--color-text-secondary)",margin:"12px 0 6px"}}>HISTORY</div>
+                    {history.slice().reverse().slice(0,5).map((entry:any,i:number)=>(
+                      <div key={i} style={{fontSize:12,padding:"5px 0",borderBottom:"0.5px solid var(--color-border-tertiary)",display:"flex",flexWrap:"wrap" as const,gap:8,justifyContent:"space-between"}}>
+                        <span style={{color:"var(--color-text-secondary)"}}>{entry.date}</span>
+                        <span style={{display:"flex",gap:10,flexWrap:"wrap" as const}}>
+                          {entry.waist!=null&&<span>W: {displayMeasure(entry.waist,measureUnit)}</span>}
+                          {entry.hips!=null&&<span>H: {displayMeasure(entry.hips,measureUnit)}</span>}
+                          {entry.chest!=null&&<span>C: {displayMeasure(entry.chest,measureUnit)}</span>}
+                          {entry.arm!=null&&<span>B: {displayMeasure(entry.arm,measureUnit)}</span>}
+                          {entry.bodyFat!=null&&<span>BF: {entry.bodyFat}%</span>}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* ── Unit converter ── */}
+            <div style={S.secTitle}>Unit converter</div>
+            <div style={S.card}>
+              {/* Height converter */}
+              <div style={{marginBottom:20}}>
+                <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>Height</div>
+                <div style={{display:"flex",gap:8,marginBottom:8}}>
+                  {([["cmToIn","cm → ft/in"],["inToCm","ft/in → cm"]] as const).map(([d,lbl])=>(
+                    <button key={d} style={S.pill(convHDir===d,"var(--color-accent)")} onClick={()=>{setConvHDir(d);setConvHInput("");}}>{lbl}</button>
+                  ))}
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <input type="text" inputMode="decimal" value={convHInput} onChange={e=>setConvHInput(e.target.value)}
+                    placeholder={convHDir==="cmToIn"?"cm e.g. 178":"inches e.g. 70"}
+                    style={{...S.input,flex:1,margin:0}}/>
+                  <div style={{fontSize:14,fontWeight:600,minWidth:80,textAlign:"right" as const,color:"var(--color-accent)"}}>
+                    {(()=>{
+                      const n=parseFloat(convHInput);
+                      if(isNaN(n)||n<=0) return "—";
+                      if(convHDir==="cmToIn") return cmToFtIn(n);
+                      return `${inchesToCm(n)} cm`;
+                    })()}
+                  </div>
+                </div>
+              </div>
+              {/* Weight converter */}
+              <div>
+                <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>Weight</div>
+                <div style={{display:"flex",gap:8,marginBottom:8}}>
+                  {([["kgToLbs","kg → lbs"],["lbsToKg","lbs → kg"]] as const).map(([d,lbl])=>(
+                    <button key={d} style={S.pill(convWDir===d,"var(--color-accent)")} onClick={()=>{setConvWDir(d);setConvWInput("");}}>{lbl}</button>
+                  ))}
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <input type="text" inputMode="decimal" value={convWInput} onChange={e=>setConvWInput(e.target.value)}
+                    placeholder={convWDir==="kgToLbs"?"kg e.g. 80":"lbs e.g. 175"}
+                    style={{...S.input,flex:1,margin:0}}/>
+                  <div style={{fontSize:14,fontWeight:600,minWidth:80,textAlign:"right" as const,color:"var(--color-accent)"}}>
+                    {(()=>{
+                      const n=parseFloat(convWInput);
+                      if(isNaN(n)||n<=0) return "—";
+                      if(convWDir==="kgToLbs") return `${Math.round(n*2.20462*10)/10} lbs`;
+                      return `${Math.round(n/2.20462*10)/10} kg`;
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── App settings ── */}
             <div style={S.secTitle}>App settings</div>
             <div style={S.card}>
               <div style={S.label}>Theme</div>
