@@ -181,9 +181,9 @@ const DB = [
   {id:163,name:"Archer Push-Up",muscle:"Chest",eq:"Bodyweight",type:"Compound"},
   {id:164,name:"Decline Push-Up",muscle:"Chest",eq:"Bodyweight",type:"Compound"},
   {id:165,name:"Bulgarian Split Squat",muscle:"Quads",eq:"Bodyweight",type:"Compound"},
-  {id:166,name:"Box Jump",muscle:"Quads",eq:"Bodyweight",type:"Compound"},
-  {id:167,name:"Jump Squat",muscle:"Quads",eq:"Bodyweight",type:"Compound"},
-  {id:168,name:"Jumping Lunge",muscle:"Quads",eq:"Bodyweight",type:"Compound"},
+  {id:166,name:"Box Jump",muscle:"Quads",eq:"Bodyweight",type:"Plyometric"},
+  {id:167,name:"Jump Squat",muscle:"Quads",eq:"Bodyweight",type:"Plyometric"},
+  {id:168,name:"Jumping Lunge",muscle:"Quads",eq:"Bodyweight",type:"Plyometric"},
   {id:169,name:"Wall Sit",muscle:"Quads",eq:"Bodyweight",type:"Isometric"},
   {id:170,name:"Reverse Crunch",muscle:"Core",eq:"Bodyweight",type:"Isolation"},
   {id:171,name:"V-Up",muscle:"Core",eq:"Bodyweight",type:"Isolation"},
@@ -214,14 +214,14 @@ const DB = [
   {id:193,name:"Barbell High Pull",muscle:"Traps",eq:"Barbell",type:"Compound"},
   {id:194,name:"Dumbbell Upright Row",muscle:"Traps",eq:"Dumbbell",type:"Compound"},
   {id:195,name:"Farmer's Walk",muscle:"Traps",eq:"Dumbbell",type:"Compound"},
-  {id:196,name:"Trap Bar Shrug",muscle:"Traps",eq:"Barbell",type:"Isolation"},
+  {id:196,name:"Trap Bar Shrug",muscle:"Traps",eq:"Trap Bar",type:"Isolation"},
 
   // Calves
   {id:197,name:"Barbell Calf Raise",muscle:"Calves",eq:"Barbell",type:"Isolation"},
   {id:198,name:"Single Leg Calf Raise",muscle:"Calves",eq:"Bodyweight",type:"Isolation"},
   {id:199,name:"Calf Press on Leg Press",muscle:"Calves",eq:"Machine",type:"Isolation"},
   {id:200,name:"Tibialis Raise",muscle:"Calves",eq:"Bodyweight",type:"Isolation"},
-  {id:201,name:"Jump Rope",muscle:"Calves",eq:"Bodyweight",type:"Compound"},
+  {id:201,name:"Jump Rope",muscle:"Calves",eq:"Bodyweight",type:"Plyometric"},
 
   // Abs (Core additions)
   {id:202,name:"Crunch",muscle:"Abs",eq:"Bodyweight",type:"Isolation"},
@@ -250,9 +250,92 @@ const DB = [
   {id:219,name:"Copenhagen Plank",muscle:"Adductors",eq:"Bodyweight",type:"Isometric"},
   {id:220,name:"Side Lying Leg Raise",muscle:"Abductors",eq:"Bodyweight",type:"Isolation"},
   {id:221,name:"Clamshell",muscle:"Abductors",eq:"Bodyweight",type:"Isolation"},
+
+  // Swiss Ball
+  {id:222,name:"Swiss Ball Crunch",muscle:"Abs",eq:"Swiss Ball",type:"Isolation"},
+  {id:223,name:"Swiss Ball Rollout",muscle:"Core",eq:"Swiss Ball",type:"Compound"},
+  {id:224,name:"Swiss Ball Pike",muscle:"Core",eq:"Swiss Ball",type:"Compound"},
+  {id:225,name:"Swiss Ball Hamstring Curl",muscle:"Hamstrings",eq:"Swiss Ball",type:"Isolation"},
+  {id:226,name:"Swiss Ball Wall Squat",muscle:"Quads",eq:"Swiss Ball",type:"Isometric"},
+  {id:227,name:"Swiss Ball Push-Up",muscle:"Chest",eq:"Swiss Ball",type:"Compound"},
+  {id:228,name:"Swiss Ball Plank",muscle:"Core",eq:"Swiss Ball",type:"Isometric"},
+  {id:229,name:"Swiss Ball Back Extension",muscle:"Back",eq:"Swiss Ball",type:"Isolation"},
+  {id:230,name:"Swiss Ball Hip Thrust",muscle:"Glutes",eq:"Swiss Ball",type:"Isolation"},
+  {id:231,name:"Swiss Ball Dumbbell Press",muscle:"Chest",eq:"Swiss Ball",type:"Compound"},
+
+  // Trap Bar
+  {id:232,name:"Trap Bar Deadlift",muscle:"Back",eq:"Trap Bar",type:"Compound"},
+  {id:233,name:"Trap Bar Carry",muscle:"Traps",eq:"Trap Bar",type:"Compound"},
+  {id:234,name:"Trap Bar Romanian Deadlift",muscle:"Hamstrings",eq:"Trap Bar",type:"Compound"},
+  {id:235,name:"Trap Bar Jump",muscle:"Quads",eq:"Trap Bar",type:"Plyometric"},
+  {id:236,name:"Trap Bar Row",muscle:"Back",eq:"Trap Bar",type:"Compound"},
+
+  // Landmine
+  {id:237,name:"Landmine Press",muscle:"Shoulders",eq:"Landmine",type:"Compound"},
+  {id:238,name:"Landmine Row",muscle:"Back",eq:"Landmine",type:"Compound"},
+  {id:239,name:"Landmine Squat",muscle:"Quads",eq:"Landmine",type:"Compound"},
+  {id:240,name:"Landmine Romanian Deadlift",muscle:"Hamstrings",eq:"Landmine",type:"Compound"},
+  {id:241,name:"Landmine Rotation",muscle:"Core",eq:"Landmine",type:"Compound"},
+  {id:242,name:"Landmine Split Squat",muscle:"Quads",eq:"Landmine",type:"Compound"},
+  {id:243,name:"Landmine Hip Thrust",muscle:"Glutes",eq:"Landmine",type:"Compound"},
+  {id:244,name:"Landmine Overhead Press",muscle:"Shoulders",eq:"Landmine",type:"Compound"},
+
+  // Medicine Ball
+  {id:245,name:"Medicine Ball Slam",muscle:"Core",eq:"Medicine Ball",type:"Plyometric"},
+  {id:246,name:"Medicine Ball Chest Pass",muscle:"Chest",eq:"Medicine Ball",type:"Plyometric"},
+  {id:247,name:"Medicine Ball Rotational Throw",muscle:"Core",eq:"Medicine Ball",type:"Plyometric"},
+  {id:248,name:"Medicine Ball Sit-Up",muscle:"Abs",eq:"Medicine Ball",type:"Isolation"},
+  {id:249,name:"Medicine Ball Russian Twist",muscle:"Core",eq:"Medicine Ball",type:"Isolation"},
+  {id:250,name:"Medicine Ball Wall Ball",muscle:"Quads",eq:"Medicine Ball",type:"Compound"},
+  {id:251,name:"Medicine Ball Overhead Slam",muscle:"Core",eq:"Medicine Ball",type:"Plyometric"},
+  {id:252,name:"Medicine Ball Squat",muscle:"Quads",eq:"Medicine Ball",type:"Compound"},
+
+  // TRX / Suspension
+  {id:253,name:"TRX Row",muscle:"Back",eq:"TRX",type:"Compound"},
+  {id:254,name:"TRX Push-Up",muscle:"Chest",eq:"TRX",type:"Compound"},
+  {id:255,name:"TRX Squat",muscle:"Quads",eq:"TRX",type:"Compound"},
+  {id:256,name:"TRX Lunge",muscle:"Quads",eq:"TRX",type:"Compound"},
+  {id:257,name:"TRX Hamstring Curl",muscle:"Hamstrings",eq:"TRX",type:"Isolation"},
+  {id:258,name:"TRX Pike",muscle:"Core",eq:"TRX",type:"Compound"},
+  {id:259,name:"TRX Plank",muscle:"Core",eq:"TRX",type:"Isometric"},
+  {id:260,name:"TRX Bicep Curl",muscle:"Biceps",eq:"TRX",type:"Isolation"},
+  {id:261,name:"TRX Tricep Extension",muscle:"Triceps",eq:"TRX",type:"Isolation"},
+  {id:262,name:"TRX Y-Fly",muscle:"Shoulders",eq:"TRX",type:"Isolation"},
+  {id:263,name:"TRX Fallout",muscle:"Core",eq:"TRX",type:"Compound"},
+
+  // No Equipment — truly floor-only, no bar or props needed
+  // Legs & Glutes
+  {id:264,name:"Air Squat",muscle:"Quads",eq:"No Equipment",type:"Compound"},
+  {id:265,name:"Reverse Lunge",muscle:"Quads",eq:"No Equipment",type:"Compound"},
+  {id:266,name:"Lateral Lunge",muscle:"Adductors",eq:"No Equipment",type:"Compound"},
+  {id:267,name:"Lunge Walk",muscle:"Quads",eq:"No Equipment",type:"Compound"},
+  {id:268,name:"Single Leg Glute Bridge",muscle:"Glutes",eq:"No Equipment",type:"Isolation"},
+  {id:269,name:"Donkey Kick",muscle:"Glutes",eq:"No Equipment",type:"Isolation"},
+  {id:270,name:"Fire Hydrant",muscle:"Abductors",eq:"No Equipment",type:"Isolation"},
+  {id:271,name:"Hip Circle",muscle:"Glutes",eq:"No Equipment",type:"Isolation"},
+  {id:272,name:"Squat Hold",muscle:"Quads",eq:"No Equipment",type:"Isometric"},
+  // Push
+  {id:273,name:"Incline Push-Up",muscle:"Chest",eq:"No Equipment",type:"Compound"},
+  {id:274,name:"Clap Push-Up",muscle:"Chest",eq:"No Equipment",type:"Plyometric"},
+  // Core & Stability
+  {id:275,name:"Side Plank",muscle:"Core",eq:"No Equipment",type:"Isometric"},
+  {id:276,name:"Side Plank Hip Dip",muscle:"Core",eq:"No Equipment",type:"Isolation"},
+  {id:277,name:"Bird Dog",muscle:"Core",eq:"No Equipment",type:"Isometric"},
+  {id:278,name:"Dead Bug",muscle:"Core",eq:"No Equipment",type:"Isometric"},
+  {id:279,name:"Mountain Climbers",muscle:"Core",eq:"No Equipment",type:"Compound"},
+  {id:280,name:"Inchworm",muscle:"Core",eq:"No Equipment",type:"Compound"},
+  {id:281,name:"Bear Crawl",muscle:"Core",eq:"No Equipment",type:"Compound"},
+  // Cardio / Plyometric
+  {id:282,name:"Burpee",muscle:"Quads",eq:"No Equipment",type:"Plyometric"},
+  {id:283,name:"High Knees",muscle:"Quads",eq:"No Equipment",type:"Plyometric"},
+  {id:284,name:"Jumping Jack",muscle:"Quads",eq:"No Equipment",type:"Plyometric"},
+  {id:285,name:"Skater Jump",muscle:"Abductors",eq:"No Equipment",type:"Plyometric"},
+  // Back & Posterior Chain
+  {id:286,name:"Good Morning (Bodyweight)",muscle:"Hamstrings",eq:"No Equipment",type:"Compound"},
+  {id:287,name:"Reverse Hyperextension",muscle:"Glutes",eq:"No Equipment",type:"Isolation"},
 ];
 
-const EQ_TYPES = ["All", "Barbell", "EZ Bar", "Smith Machine", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell", "Rings", "Bands"];
+const EQ_TYPES = ["All", "Barbell", "EZ Bar", "Smith Machine", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell", "Rings", "Bands", "Swiss Ball", "Trap Bar", "Landmine", "Medicine Ball", "TRX", "No Equipment"];
 const MUSCLES = ["All", ...new Set(DB.map(e => e.muscle)).values()];
 
 // ─── PLATE CALCULATOR CONSTANTS ───────────────────────────────────────────
@@ -626,6 +709,11 @@ export default function GymBro() {
   // ── Routines UI state ──
   const [showArchived, setShowArchived] = useState(false); // toggle archived routines visibility
 
+  // ── Custom exercises — user-created, merged with built-in DB ──
+  const [customExercises, setCustomExercises] = useState<any[]>(_saved?.customExercises ?? []);
+  const [showCustomForm, setShowCustomForm] = useState(false); // form open in DB tab
+  const [customForm, setCustomForm] = useState({name:"", muscle:"Chest", eq:"Barbell", type:"Isolation"});
+
   const [theme, setTheme] = useState(_saved?.theme ?? "matrix");
   const [profiles, setProfiles] = useState<Record<string,any>>(_saved?.profiles ?? {});
   const [profileWeightInput, setProfileWeightInput] = useState("");
@@ -634,15 +722,17 @@ export default function GymBro() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   // ── DB FILTER (must be before early return — Rules of Hooks) ──
-  const filteredDB = useMemo(()=>DB.filter(e=>
+  // fullDB merges built-in exercises with any user-created custom ones
+  const fullDB = useMemo(()=>[...DB, ...customExercises],[customExercises]);
+  const filteredDB = useMemo(()=>fullDB.filter(e=>
     (dbEq==="All"||e.eq===dbEq)&&
     (dbMuscle==="All"||e.muscle===dbMuscle)&&
     e.name.toLowerCase().includes(dbSearch.toLowerCase())
-  ),[dbEq,dbMuscle,dbSearch]);
+  ),[fullDB,dbEq,dbMuscle,dbSearch]);
 
   // ── PERSIST ──
   useEffect(()=>{
-    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn,theme,profiles,plateInventory}));
+    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn,theme,profiles,plateInventory,customExercises}));
   },[users,sessions,routines,loggedIn,theme]);
 
   useEffect(()=>{
@@ -1205,9 +1295,11 @@ export default function GymBro() {
                   </div>
                 );
               })}
-              <AddExerciseInline onAdd={name=>{
-                setActiveSession(prev=>({...prev,exercises:[...prev.exercises,{name,sets:[{w:"",r:""}],note:""}]}));
-              }}/>
+              <AddExerciseInline
+                allExercises={fullDB}
+                onAdd={name=>setActiveSession(prev=>({...prev,exercises:[...prev.exercises,{name,sets:[{w:"",r:""}],note:""}]}))}
+                onCreateCustom={newEx=>setCustomExercises(prev=>[...prev,newEx])}
+              />
               {/* Session total volume summary */}
               {calcSessionVol(activeSession.exercises) > 0 && (
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",marginTop:12,borderRadius:"var(--border-radius-md)",background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-tertiary)"}}>
@@ -1482,26 +1574,89 @@ export default function GymBro() {
       {/* ── EXERCISE DB ── */}
       {tab==="db" && (
         <div>
-          <input value={dbSearch} onChange={e=>setDbSearch(e.target.value)} placeholder="Search exercises..." style={{...S.input,marginBottom:8}}/>
-          <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:6}}>
+          {/* Search bar */}
+          <input value={dbSearch} onChange={e=>setDbSearch(e.target.value)} placeholder="Search exercises..." style={{...S.input,marginBottom:12}}/>
+
+          {/* Equipment filter pills */}
+          <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:4}}>Equipment</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
             {EQ_TYPES.map(t=><button key={t} style={S.pill(dbEq===t,"var(--color-accent)")} onClick={()=>setDbEq(t)}>{t}</button>)}
           </div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:12}}>
-            {MUSCLES.map(m=><button key={m} style={S.pill(dbMuscle===m,"#534AB7")} onClick={()=>setDbMuscle(m)}>{m}</button>)}
+
+          {/* Muscle group filter pills */}
+          <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:4}}>Muscle group</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}}>
+            {["All","Chest","Back","Shoulders","Traps","Biceps","Triceps","Forearms","Abs","Core","Quads","Hamstrings","Glutes","Adductors","Abductors","Calves","Neck"].map(m=>(
+              <button key={m} style={S.pill(dbMuscle===m,"#534AB7")} onClick={()=>setDbMuscle(m)}>{m}</button>
+            ))}
           </div>
-          <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:8}}>{filteredDB.length} exercises</div>
-          {filteredDB.map(ex=>(
-            <div key={ex.id} style={S.card}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:14,fontWeight:500}}>{ex.name}</span>
-                <div style={{display:"flex",gap:4}}>
-                  <span style={S.tag("var(--color-accent)")}>{ex.muscle}</span>
-                  <span style={S.tag("#3B6D11")}>{ex.eq}</span>
-                </div>
+
+          {/* Count + create button */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{filteredDB.length} exercises</span>
+            <button style={S.btnPrimary} onClick={()=>{ setCustomForm({name:"",muscle:"Chest",eq:"Barbell",type:"Isolation"}); setShowCustomForm(true); }}>+ Create exercise</button>
+          </div>
+
+          {/* Create custom exercise form */}
+          {showCustomForm && (
+            <div style={{...S.card,marginBottom:12,borderColor:"var(--color-accent)"}}>
+              <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>New exercise</div>
+              <div style={S.label}>Name</div>
+              <input value={customForm.name} onChange={e=>setCustomForm(f=>({...f,name:e.target.value}))}
+                placeholder="e.g. Cable Face Pull" style={{...S.input,marginBottom:8}} autoFocus/>
+              <div style={S.label}>Muscle group</div>
+              <select value={customForm.muscle} onChange={e=>setCustomForm(f=>({...f,muscle:e.target.value}))}
+                style={{...S.input,marginBottom:8}}>
+                {["Chest","Back","Shoulders","Traps","Biceps","Triceps","Forearms","Abs","Core","Quads","Hamstrings","Glutes","Adductors","Abductors","Calves","Neck"].map(m=>(
+                  <option key={m}>{m}</option>
+                ))}
+              </select>
+              <div style={S.label}>Equipment</div>
+              <select value={customForm.eq} onChange={e=>setCustomForm(f=>({...f,eq:e.target.value}))}
+                style={{...S.input,marginBottom:8}}>
+                {["Barbell","EZ Bar","Smith Machine","Dumbbell","Cable","Machine","Bodyweight","Kettlebell","Rings","Bands","Swiss Ball","Trap Bar","Landmine","Medicine Ball","TRX","No Equipment"].map(e=>(
+                  <option key={e}>{e}</option>
+                ))}
+              </select>
+              <div style={S.label}>Type</div>
+              <select value={customForm.type} onChange={e=>setCustomForm(f=>({...f,type:e.target.value}))}
+                style={{...S.input,marginBottom:12}}>
+                {["Compound","Isolation","Isometric","Plyometric"].map(t=><option key={t}>{t}</option>)}
+              </select>
+              <div style={{display:"flex",gap:8}}>
+                <button style={{...S.btnPrimary,flex:1}} onClick={()=>{
+                  if (!customForm.name.trim()) return;
+                  const newEx = {...customForm, name:customForm.name.trim(), id:`custom-${Date.now()}`, custom:true};
+                  setCustomExercises(prev=>[...prev, newEx]);
+                  setShowCustomForm(false);
+                }}>Save</button>
+                <button style={S.btn} onClick={()=>setShowCustomForm(false)}>Cancel</button>
               </div>
-              <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{ex.type}</div>
             </div>
-          ))}
+          )}
+
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {filteredDB.map(ex=>(
+              <div key={ex.id} style={{...S.card,padding:"10px 12px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:14,fontWeight:500}}>{ex.name}</span>
+                    {ex.custom && <span style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:"#534AB722",color:"#534AB7",fontWeight:500}}>custom</span>}
+                  </div>
+                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <span style={S.tag("var(--color-accent)")}>{ex.muscle}</span>
+                    <span style={S.tag("#3B6D11")}>{ex.eq}</span>
+                    {ex.custom && (
+                      <button style={{...S.btn,fontSize:11,color:"#A32D2D",padding:"2px 7px"}} onClick={()=>
+                        window.confirm(`Delete "${ex.name}"?`) && setCustomExercises(prev=>prev.filter(e=>e.id!==ex.id))
+                      }>✕</button>
+                    )}
+                  </div>
+                </div>
+                <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:4}}>{ex.type}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -1669,22 +1824,68 @@ function AuthScreen({users,setUsers,sessions,setSessions,routines,setRoutines,au
 }
 
 // ─── ADD EXERCISE INLINE ──────────────────────────────────────────────────
-function AddExerciseInline({onAdd}) {
+function AddExerciseInline({onAdd, allExercises, onCreateCustom}) {
   const [q,setQ]=useState("");
   const [open,setOpen]=useState(false);
-  const res=DB.filter(e=>e.name.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  const [creating,setCreating]=useState(false);
+  const [form,setForm]=useState({muscle:"Chest",eq:"Barbell",type:"Isolation"});
+  const res=(allExercises||DB).filter(e=>e.name.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  const ALL_MUSCLES_INLINE = ["Chest","Back","Shoulders","Traps","Biceps","Triceps","Forearms","Abs","Core","Quads","Hamstrings","Glutes","Adductors","Abductors","Calves","Neck"];
+  const ALL_EQ_INLINE = ["Barbell","EZ Bar","Smith Machine","Dumbbell","Cable","Machine","Bodyweight","Kettlebell","Rings","Bands","Swiss Ball","Trap Bar","Landmine","Medicine Ball","TRX","No Equipment"];
   return (
     <div style={{marginTop:8}}>
       {!open
         ? <button style={{padding:"6px 14px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"transparent",color:"var(--color-text-primary)",cursor:"pointer",fontSize:13}} onClick={()=>setOpen(true)}>+ Add exercise</button>
         : <div style={{background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"0.75rem"}}>
-            <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Search exercise..." style={{width:"100%",boxSizing:"border-box",padding:"6px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13,marginBottom:6}}/>
-            {res.map(e=>(
-              <div key={e.id} style={{padding:"5px 8px",fontSize:13,cursor:"pointer",borderRadius:4}} onClick={()=>{onAdd(e.name);setQ("");setOpen(false);}}>
-                {e.name} <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>{e.eq}</span>
+            {!creating ? (<>
+              <input autoFocus value={q} onChange={e=>{setQ(e.target.value);setCreating(false);}} placeholder="Search exercise..." style={{width:"100%",boxSizing:"border-box",padding:"6px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13,marginBottom:6}}/>
+              {res.map(e=>(
+                <div key={e.id} style={{padding:"5px 8px",fontSize:13,cursor:"pointer",borderRadius:4,display:"flex",justifyContent:"space-between",alignItems:"center"}} onClick={()=>{onAdd(e.name);setQ("");setOpen(false);}}>
+                  <span>{e.name}{e.custom&&<span style={{fontSize:10,marginLeft:6,color:"#534AB7"}}>custom</span>}</span>
+                  <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>{e.muscle}</span>
+                </div>
+              ))}
+              {/* If typed text doesn't match anything, offer to create it as a custom exercise */}
+              {q.trim() && res.length===0 && (
+                <div style={{padding:"8px",fontSize:12,color:"var(--color-text-secondary)"}}>
+                  No results for "<strong style={{color:"var(--color-text-primary)"}}>{q}</strong>"
+                  <button style={{display:"block",marginTop:6,fontSize:12,padding:"4px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-accent)",background:"transparent",color:"var(--color-accent)",cursor:"pointer"}}
+                    onClick={()=>setCreating(true)}>+ Create "{q}" as custom exercise</button>
+                </div>
+              )}
+              <button style={{fontSize:12,padding:"4px 10px",marginTop:4,borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"transparent",color:"var(--color-text-secondary)",cursor:"pointer"}} onClick={()=>{setOpen(false);setQ("");}}>Cancel</button>
+            </>) : (<>
+              {/* Inline quick-create form — pre-fills name from the search query */}
+              <div style={{fontSize:13,fontWeight:500,marginBottom:8}}>Create custom exercise</div>
+              <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:6}}>Name: <strong style={{color:"var(--color-text-primary)"}}>{q}</strong></div>
+              <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:3}}>Muscle group</div>
+              <select value={form.muscle} onChange={e=>setForm(f=>({...f,muscle:e.target.value}))}
+                style={{width:"100%",marginBottom:6,padding:"5px 8px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:12}}>
+                {ALL_MUSCLES_INLINE.map(m=><option key={m}>{m}</option>)}
+              </select>
+              <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:3}}>Equipment</div>
+              <select value={form.eq} onChange={e=>setForm(f=>({...f,eq:e.target.value}))}
+                style={{width:"100%",marginBottom:6,padding:"5px 8px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:12}}>
+                {ALL_EQ_INLINE.map(e=><option key={e}>{e}</option>)}
+              </select>
+              <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:3}}>Type</div>
+              <select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}
+                style={{width:"100%",marginBottom:8,padding:"5px 8px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:12}}>
+                {["Compound","Isolation","Isometric","Plyometric"].map(t=><option key={t}>{t}</option>)}
+              </select>
+              <div style={{display:"flex",gap:6}}>
+                <button style={{flex:1,padding:"5px",borderRadius:"var(--border-radius-md)",border:"none",background:"var(--color-accent)",color:"#000",cursor:"pointer",fontSize:12,fontWeight:500}}
+                  onClick={()=>{
+                    if (!q.trim()) return;
+                    const newEx = {id:`custom-${Date.now()}`,name:q.trim(),...form,custom:true};
+                    onCreateCustom(newEx);  // saves to customExercises state
+                    onAdd(newEx.name);      // adds to the active session
+                    setQ(""); setOpen(false); setCreating(false);
+                  }}>Save & add to session</button>
+                <button style={{padding:"5px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"transparent",color:"var(--color-text-secondary)",cursor:"pointer",fontSize:12}}
+                  onClick={()=>setCreating(false)}>Back</button>
               </div>
-            ))}
-            <button style={{fontSize:12,padding:"4px 10px",marginTop:4,borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"transparent",color:"var(--color-text-secondary)",cursor:"pointer"}} onClick={()=>setOpen(false)}>Cancel</button>
+            </>)}
           </div>
       }
     </div>
