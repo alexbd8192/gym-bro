@@ -255,21 +255,28 @@ const DB = [
 const EQ_TYPES = ["All", "Barbell", "EZ Bar", "Smith Machine", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell", "Rings", "Bands"];
 const MUSCLES = ["All", ...new Set(DB.map(e => e.muscle)).values()];
 
-// Bar weights in lbs
+// ─── PLATE CALCULATOR CONSTANTS ───────────────────────────────────────────
+// Bar weights stored in lbs; converted to kg on display when needed
 const BARS = [
   {name:"Barbell", weight:45},
   {name:"Smith Machine", weight:35},
   {name:"EZ Bar", weight:20},
 ];
+// Available plate sizes, largest first so calcPlates greedily picks big plates
 const PLATES_LBS = [45,35,25,10,5,2.5,1.25];
 const PLATES_KG  = [20,15,10,5,2.5,1.25];
+// Visual colors for each plate weight (shared across lbs and kg where weights match)
 const PLATE_COLORS = {45:"#E24B4A",35:"#185FA5",25:"#F0992B",20:"#E24B4A",15:"#185FA5",10:"#3B6D11",5:"#534AB7",2.5:"#888",1.25:"#aaa"};
 
-function calcPlates(target, barW, plates) {
-  let rem = Math.max(0, (target - barW) / 2);
+// Greedy plate calculator: subtracts bar weight, divides remainder by 2 (each side),
+// then fills from largest plate down. maxPairs limits how many of each plate can be used.
+// Returns [{plate, count}] for one side of the bar.
+function calcPlates(target, barW, plates, maxPairs: Record<number,number> = {}) {
+  let rem = Math.max(0, (target - barW) / 2); // weight needed per side
   const res = [];
   plates.forEach(p => {
-    const n = Math.floor(rem / p + 0.001);
+    const max = maxPairs[p] ?? Infinity;
+    const n = Math.min(Math.floor(rem / p + 0.001), max); // 0.001 tolerance for float errors
     if (n > 0) { res.push({plate:p, count:n}); rem = Math.round((rem - n*p)*1000)/1000; }
   });
   return res;
@@ -351,6 +358,8 @@ const DEMO_ROUTINES = {
 };
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────
+
+// Returns a map of { exerciseName → {w, r, date} } for all-time heaviest set per exercise
 function getPRs(sessions) {
   const prs = {};
   (sessions||[]).forEach(s => s.exercises.forEach(ex => {
@@ -361,6 +370,8 @@ function getPRs(sessions) {
   return prs;
 }
 
+// Returns the two most recent sessions that contain a given exercise,
+// each with the best (heaviest) weight logged that day
 function getLastTwo(sessions, exName) {
   const logs = [];
   [...(sessions||[])].sort((a,b)=>a.date>b.date?-1:1).forEach(s => {
@@ -370,6 +381,7 @@ function getLastTwo(sessions, exName) {
   return logs.slice(0,2);
 }
 
+// Triggers a CSV download of all sessions for the logged-in user
 function exportCSV(sessions, userName) {
   const rows = [["Date","Session","Exercise","Set","Weight(lbs)","Reps"]];
   sessions.forEach(s => s.exercises.forEach(ex => ex.sets.forEach((set,i) =>
@@ -382,6 +394,7 @@ function exportCSV(sessions, userName) {
   a.click();
 }
 
+// Triggers a Markdown download of all sessions for the logged-in user
 function exportMD(sessions, userName) {
   let md = `# Gym Bro — ${userName} export\n\n`;
   sessions.forEach(s => {
@@ -528,17 +541,24 @@ function cmToFtIn(cm:number) {
 }
 
 // ─── APP ──────────────────────────────────────────────────────────────────
+// Single root component — all state lives here and is persisted to localStorage
 export default function GymBro() {
+  // ── Core data — persisted to localStorage ──
   const [users, setUsers] = useState(_saved?.users ?? DEMO_USERS);
-  const [sessions, setSessions] = useState(_saved?.sessions ?? DEMO_SESSIONS);
-  const [routines, setRoutines] = useState(_saved?.routines ?? DEMO_ROUTINES);
-  const [loggedIn, setLoggedIn] = useState(_saved?.loggedIn ?? null);
-  const [authMode, setAuthMode] = useState("login");
+  const [sessions, setSessions] = useState(_saved?.sessions ?? DEMO_SESSIONS);   // keyed by userId
+  const [routines, setRoutines] = useState(_saved?.routines ?? DEMO_ROUTINES);   // keyed by userId
+  const [loggedIn, setLoggedIn] = useState(_saved?.loggedIn ?? null);            // {id, name} or null
+
+  // ── Auth UI state ──
+  const [authMode, setAuthMode] = useState("login");  // "login" | "register"
   const [authForm, setAuthForm] = useState({name:"",password:""});
   const [authErr, setAuthErr] = useState("");
+
+  // ── Navigation ──
   const [tab, setTab] = useState("dashboard");
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);  // controls the "More ▾" dropdown
   const moreRef = useRef<HTMLDivElement>(null);
+  // Close the More dropdown when clicking outside of it
   useEffect(()=>{
     if (!moreOpen) return;
     const handler = (e:MouseEvent)=>{ if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false); };
@@ -546,43 +566,48 @@ export default function GymBro() {
     return ()=>document.removeEventListener("mousedown", handler);
   },[moreOpen]);
 
-  // Calculator state
-  const [unit, setUnit] = useState("lbs");
-  const [barIdx, setBarIdx] = useState(0);
-  const [targetW, setTargetW] = useState(135);
+  // ── Calculator state ──
+  const [unit, setUnit] = useState("lbs");           // "lbs" or "kg"
+  const [barIdx, setBarIdx] = useState(0);           // index into BARS array
+  const [targetW, setTargetW] = useState(135);       // target weight (number, used for calculation)
+  const [targetWInput, setTargetWInput] = useState("135"); // raw string shown in the text input
+  const [plateInventory, setPlateInventory] = useState<Record<string,number>>(_saved?.plateInventory ?? {});
 
   // DB tab state
   const [dbSearch, setDbSearch] = useState("");
   const [dbEq, setDbEq] = useState("All");
   const [dbMuscle, setDbMuscle] = useState("All");
 
-  // Log/session state
+  // ── Active session logging ──
+  // activeSession is null when not logging; otherwise holds the in-progress workout
   const [activeSession, setActiveSession] = useState(null); // {routineName, exercises:[{name,sets:[{w,r}],note?:string}]}
-  const [editSessionId, setEditSessionId] = useState(null);
-  const [showCommentStep, setShowCommentStep] = useState(false);
+  const [editSessionId, setEditSessionId] = useState(null); // non-null when editing a past session
+  const [showCommentStep, setShowCommentStep] = useState(false); // shows the post-session comment box
   const [sessionComment, setSessionComment] = useState("");
-  const [restDuration, setRestDuration] = useState(120);
-  const [restRemaining, setRestRemaining] = useState<number|null>(null);
+
+  // ── Rest timer (used during active session) ──
+  const [restDuration, setRestDuration] = useState(120);         // configured duration in seconds
+  const [restRemaining, setRestRemaining] = useState<number|null>(null); // null = timer not started
   const [restRunning, setRestRunning] = useState(false);
 
-  // Routine state
+  // ── Routine form state ──
   const [editRoutineId, setEditRoutineId] = useState(null);
   const [showNewRoutine, setShowNewRoutine] = useState(false);
   const [routineForm, setRoutineForm] = useState({name:"",exercises:[]});
   const [routineExSearch, setRoutineExSearch] = useState("");
 
-  // Calendar state
-  const [calSelectedDay, setCalSelectedDay] = useState(null);
-  const [logCalSelectedDay, setLogCalSelectedDay] = useState(null);
-  const [calOffset, setCalOffset] = useState(0);      // weeks back from current, dashboard
-  const [logCalOffset, setLogCalOffset] = useState(0); // weeks back from current, session
+  // ── Calendar navigation ──
+  const [calSelectedDay, setCalSelectedDay] = useState(null);     // day selected on dashboard calendar
+  const [logCalSelectedDay, setLogCalSelectedDay] = useState(null); // day selected on session calendar
+  const [calOffset, setCalOffset] = useState(0);      // how many weeks back the dashboard calendar is showing
+  const [logCalOffset, setLogCalOffset] = useState(0); // same for the session tab calendar
 
-  // Dashboard session detail state
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
-  const [e1rmTooltip, setE1rmTooltip] = useState(false);
+  // ── Dashboard UI state ──
+  const [selectedSessionId, setSelectedSessionId] = useState(null); // expanded session card
+  const [e1rmTooltip, setE1rmTooltip] = useState(false);            // info popup for e1RM explanation
 
-  // Routines archive UI state
-  const [showArchived, setShowArchived] = useState(false);
+  // ── Routines UI state ──
+  const [showArchived, setShowArchived] = useState(false); // toggle archived routines visibility
 
   const [theme, setTheme] = useState(_saved?.theme ?? "matrix");
   const [profiles, setProfiles] = useState<Record<string,any>>(_saved?.profiles ?? {});
@@ -600,7 +625,7 @@ export default function GymBro() {
 
   // ── PERSIST ──
   useEffect(()=>{
-    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn,theme,profiles}));
+    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn,theme,profiles,plateInventory}));
   },[users,sessions,routines,loggedIn,theme]);
 
   useEffect(()=>{
@@ -701,9 +726,15 @@ export default function GymBro() {
 
   // ── CALC ──
   const bar = BARS[barIdx];
-  const plates = unit==="lbs" ? PLATES_LBS : PLATES_KG;
+  const allPlates = unit==="lbs" ? PLATES_LBS : PLATES_KG;
   const barW = unit==="lbs" ? bar.weight : Math.round(bar.weight*0.453592*10)/10;
-  const plateList = calcPlates(targetW, barW, plates);
+  function getPairs(p: number): number { return plateInventory[`${unit}-${p}`] ?? 1; }
+  function setPairs(p: number, n: number) { setPlateInventory(prev=>({...prev,[`${unit}-${p}`]:Math.max(0,Math.min(9,n))})); }
+  const availPlates = allPlates.filter(p=>getPairs(p)>0);
+  const maxPairsMap = Object.fromEntries(allPlates.map(p=>[p, getPairs(p)]));
+  const plateList = calcPlates(targetW, barW, availPlates, maxPairsMap);
+  const actualTotal = barW + plateList.reduce((sum,{plate,count})=>sum+plate*count*2, 0);
+  const notExact = Math.abs(actualTotal - targetW) > 0.01;
 
   // ── CALENDAR ──
   const sessionsByDate: Record<string,typeof userSessions> = {};
@@ -1290,19 +1321,51 @@ export default function GymBro() {
       {/* ── CALCULATOR ── */}
       {tab==="calc" && (
         <div>
+          {/* Unit selector — switches between lbs and kg, resets target to a sensible default */}
           <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center"}}>
             <span style={{fontSize:13}}>Unit:</span>
-            {["lbs","kg"].map(u=><button key={u} style={S.pill(unit===u,"var(--color-accent)")} onClick={()=>{setUnit(u);setTargetW(u==="lbs"?135:60);}}>{u}</button>)}
+            {["lbs","kg"].map(u=><button key={u} style={S.pill(unit===u,"var(--color-accent)")} onClick={()=>{
+              const def = u==="lbs"?135:60;
+              setUnit(u); setTargetW(def); setTargetWInput(String(def));
+            }}>{u}</button>)}
           </div>
+          {/* Bar selector — affects the bar weight subtracted before plate calculation */}
           <div style={{display:"flex",gap:6,marginBottom:14}}>
             {BARS.map((b,i)=><button key={b.name} style={S.pill(barIdx===i,"#3B6D11")} onClick={()=>setBarIdx(i)}>{b.name} ({unit==="lbs"?b.weight:Math.round(b.weight*0.453592)})</button>)}
           </div>
           <div style={S.label}>Target weight ({unit})</div>
           <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
-            <input type="range" min={barW} max={unit==="lbs"?500:225} step={unit==="lbs"?5:2.5} value={targetW} onChange={e=>setTargetW(Number(e.target.value))} style={{flex:1}}/>
-            <button style={S.btn} onClick={()=>setTargetW(prev=>Math.max(barW,prev-(unit==="lbs"?5:2.5)))}>-5</button>
-            <input type="text" inputMode="decimal" value={targetW} style={{...S.sm,width:64,textAlign:"center"}} onChange={e=>{const v=parseFloat(e.target.value);if(!isNaN(v))setTargetW(Math.max(barW,v));}}/>
-            <button style={S.btn} onClick={()=>setTargetW(prev=>prev+(unit==="lbs"?5:2.5))}>+5</button>
+            {/* Slider for quick scrubbing */}
+            <input type="range" min={barW} max={unit==="lbs"?500:225} step={unit==="lbs"?5:2.5} value={targetW}
+              onChange={e=>{ const v=Number(e.target.value); setTargetW(v); setTargetWInput(String(v)); }}
+              style={{flex:1}}/>
+            {/* Step-down button */}
+            <button style={S.btn} onClick={()=>{
+              const v = Math.max(barW, targetW-(unit==="lbs"?5:2.5));
+              setTargetW(v); setTargetWInput(String(v));
+            }}>-5</button>
+            {/* Free-type input — snaps to nearest achievable weight on blur or Enter */}
+            <input
+              type="text" inputMode="decimal"
+              value={targetWInput}
+              style={{...S.sm,width:64,textAlign:"center"}}
+              onChange={e=>setTargetWInput(e.target.value)}
+              onBlur={()=>{
+                const parsed = parseFloat(targetWInput);
+                if (isNaN(parsed)) { setTargetWInput(String(targetW)); return; }
+                // Snap to nearest step increment, clamped to bar weight minimum
+                const step = unit==="lbs" ? 2.5 : 1.25;
+                const snapped = Math.max(barW, Math.round(parsed / step) * step);
+                setTargetW(snapped);
+                setTargetWInput(String(snapped));
+              }}
+              onKeyDown={e=>{ if(e.key==="Enter") (e.target as HTMLInputElement).blur(); }}
+            />
+            {/* Step-up button */}
+            <button style={S.btn} onClick={()=>{
+              const v = targetW+(unit==="lbs"?5:2.5);
+              setTargetW(v); setTargetWInput(String(v));
+            }}>+5</button>
           </div>
           <div style={S.card}>
             <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:10}}>Bar: {barW} {unit}  ·  Each side:</div>
@@ -1319,10 +1382,34 @@ export default function GymBro() {
                 </div>
               </div>
             ))}
-            <div style={{borderTop:"0.5px solid var(--color-border-tertiary)",marginTop:8,paddingTop:8,fontSize:13,fontWeight:500}}>
-              Total: {targetW} {unit}
+            <div style={{borderTop:"0.5px solid var(--color-border-tertiary)",marginTop:8,paddingTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:13,fontWeight:500}}>Total: {actualTotal} {unit}</span>
+              {notExact && <span style={{fontSize:11,color:"#F0992B"}}>⚠ {targetW - actualTotal > 0 ? `+${(targetW-actualTotal).toFixed(2)}` : (targetW-actualTotal).toFixed(2)} {unit} short</span>}
             </div>
           </div>
+
+          <div style={{fontSize:13,fontWeight:500,marginTop:"1.25rem",marginBottom:8}}>My plates ({unit})</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:4}}>
+            {allPlates.map(p=>{
+              const pairs = getPairs(p);
+              const enabled = pairs > 0;
+              const color = PLATE_COLORS[p] || "#888";
+              return (
+                <div key={p} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 10px",borderRadius:6,border:`1px solid ${enabled ? color : "var(--color-border-tertiary)"}`,background:enabled ? `${color}18` : "none",minWidth:58}}>
+                  <div style={{width:10,height:10,borderRadius:"50%",background:color,opacity:enabled?1:0.35}}/>
+                  <span style={{fontSize:12,fontWeight:500,opacity:enabled?1:0.4}}>{p} {unit}</span>
+                  <span style={{fontSize:10,color:enabled?"var(--color-text-secondary)":"#A32D2D",marginBottom:1}}>
+                    {enabled ? `${pairs} ${pairs===1?"pair":"pairs"}` : "disabled"}
+                  </span>
+                  <div style={{display:"flex",alignItems:"center",gap:3}}>
+                    <button style={{...S.btn,padding:"1px 6px",fontSize:11}} onClick={()=>setPairs(p,pairs-1)}>−</button>
+                    <button style={{...S.btn,padding:"1px 6px",fontSize:11}} onClick={()=>setPairs(p,pairs+1)}>+</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{fontSize:10,color:"var(--color-text-secondary)",marginBottom:4}}>Max 9 pairs · tap − to 0 to disable</div>
         </div>
       )}
 
