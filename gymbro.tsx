@@ -411,20 +411,20 @@ const DEMO_SESSIONS = {
 
 const DEMO_ROUTINES = {
   alex:[
-    {id:"r1",name:"Push Day",exercises:[
+    {id:"r1",name:"Push Day",programId:"p1",exercises:[
       {name:"Bench Press",sets:3,reps:"5",weight:"185"},
       {name:"Overhead Press",sets:3,reps:"8",weight:"115"},
       {name:"Incline Dumbbell Press",sets:3,reps:"10",weight:"70"},
       {name:"Tricep Pushdown",sets:3,reps:"12",weight:"60"},
       {name:"Cable Fly",sets:2,reps:"15",weight:"40"},
     ]},
-    {id:"r2",name:"Pull Day",exercises:[
+    {id:"r2",name:"Pull Day",programId:"p1",exercises:[
       {name:"Deadlift",sets:3,reps:"3",weight:"315"},
       {name:"Barbell Row",sets:3,reps:"8",weight:"185"},
       {name:"Lat Pulldown",sets:3,reps:"10",weight:"130"},
       {name:"Dumbbell Curl",sets:3,reps:"12",weight:"40"},
     ]},
-    {id:"r3",name:"Legs",exercises:[
+    {id:"r3",name:"Legs",programId:"p1",exercises:[
       {name:"Back Squat",sets:3,reps:"5",weight:"225"},
       {name:"Romanian Deadlift",sets:3,reps:"8",weight:"185"},
       {name:"Leg Press",sets:3,reps:"12",weight:"360"},
@@ -432,12 +432,17 @@ const DEMO_ROUTINES = {
     ]},
   ],
   gf:[
-    {id:"g1",name:"Lower A",exercises:[
+    {id:"g1",name:"Lower A",programId:"",exercises:[
       {name:"Hip Thrust",sets:3,reps:"10",weight:"135"},
       {name:"Leg Press",sets:3,reps:"12",weight:"180"},
       {name:"Leg Curl",sets:3,reps:"12",weight:"70"},
     ]},
   ],
+};
+
+const DEMO_PROGRAMS = {
+  alex: [{id:"p1", name:"PPL"}],
+  gf:   [],
 };
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────
@@ -647,6 +652,7 @@ export default function GymBro() {
   const [users, setUsers] = useState(_saved?.users ?? DEMO_USERS);
   const [sessions, setSessions] = useState(_saved?.sessions ?? DEMO_SESSIONS);   // keyed by userId
   const [routines, setRoutines] = useState(_saved?.routines ?? DEMO_ROUTINES);   // keyed by userId
+  const [programs, setPrograms] = useState(_saved?.programs ?? DEMO_PROGRAMS);   // keyed by userId
   const [loggedIn, setLoggedIn] = useState(_saved?.loggedIn ?? null);            // {id, name} or null
 
   // ── Auth UI state ──
@@ -693,7 +699,7 @@ export default function GymBro() {
   // ── Routine form state ──
   const [editRoutineId, setEditRoutineId] = useState(null);
   const [showNewRoutine, setShowNewRoutine] = useState(false);
-  const [routineForm, setRoutineForm] = useState({name:"",exercises:[]});
+  const [routineForm, setRoutineForm] = useState({name:"",exercises:[],programId:""});
   const [routineExSearch, setRoutineExSearch] = useState("");
 
   // ── Calendar navigation ──
@@ -707,7 +713,15 @@ export default function GymBro() {
   const [e1rmTooltip, setE1rmTooltip] = useState(false);            // info popup for e1RM explanation
 
   // ── Routines UI state ──
-  const [showArchived, setShowArchived] = useState(false); // toggle archived routines visibility
+  const [showArchived, setShowArchived] = useState(false);       // toggle archived routines visibility
+  const [showNewProgram, setShowNewProgram] = useState(false);   // program creation form open
+  const [programForm, setProgramForm] = useState({name:"", routineIds:[] as string[]});  // new/edit program form
+  const [editProgramId, setEditProgramId] = useState(null);      // non-null when renaming a program
+  const [collapsedPrograms, setCollapsedPrograms] = useState<Record<string,boolean>>({});  // which programs are collapsed
+  const [confirmDeleteProgramId, setConfirmDeleteProgramId] = useState(null); // confirm before deleting a program
+  const [addRoutinesProgramId, setAddRoutinesProgramId] = useState<string|null>(null);   // program whose "add routines" picker is open
+  const [addRoutinesSelection, setAddRoutinesSelection] = useState<string[]>([]);         // routine ids checked in that picker
+  const [activeProgramId, setActiveProgramId] = useState<string|null>(_saved?.activeProgramId ?? null); // program currently being followed
 
   // ── Custom exercises — user-created, merged with built-in DB ──
   const [customExercises, setCustomExercises] = useState<any[]>(_saved?.customExercises ?? []);
@@ -732,8 +746,8 @@ export default function GymBro() {
 
   // ── PERSIST ──
   useEffect(()=>{
-    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,loggedIn,theme,profiles,plateInventory,customExercises}));
-  },[users,sessions,routines,loggedIn,theme]);
+    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,programs,activeProgramId,loggedIn,theme,profiles,plateInventory,customExercises}));
+  },[users,sessions,routines,programs,activeProgramId,loggedIn,theme]);
 
   useEffect(()=>{
     const t = THEMES[theme] || THEMES.matrix;
@@ -809,14 +823,47 @@ export default function GymBro() {
     } else {
       setRoutines(prev=>({...prev,[uid]:[...(prev[uid]||[]),{...routineForm,id:"r"+Date.now()}]}));
     }
-    setRoutineForm({name:"",exercises:[]});
+    setRoutineForm({name:"",exercises:[],programId:""});
     setShowNewRoutine(false);
   }
 
   function editRoutine(r) {
-    setRoutineForm({name:r.name,exercises:r.exercises.map(e=>({...e}))});
+    setRoutineForm({name:r.name,exercises:r.exercises.map(e=>({...e})),programId:r.programId||""});
     setEditRoutineId(r.id);
     setShowNewRoutine(true);
+  }
+
+  // Duplicate a routine — clones it with a " (copy)" name suffix
+  function duplicateRoutine(r) {
+    const copy = {...r, id:"r"+Date.now(), name:r.name+" (copy)"};
+    setRoutines(prev=>({...prev,[uid]:[...(prev[uid]||[]),copy]}));
+  }
+
+  // Program CRUD
+  function saveProgram() {
+    if (!programForm.name.trim()) return;
+    const pid = editProgramId ?? ("p"+Date.now());
+    if (editProgramId) {
+      setPrograms(prev=>({...prev,[uid]:prev[uid].map(p=>p.id===editProgramId?{...p,name:programForm.name.trim()}:p)}));
+      setEditProgramId(null);
+    } else {
+      setPrograms(prev=>({...prev,[uid]:[...(prev[uid]||[]),{id:pid,name:programForm.name.trim()}]}));
+    }
+    // Assign selected routines to this program (move them in; leave others unchanged)
+    if (programForm.routineIds.length>0) {
+      setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>
+        programForm.routineIds.includes(r.id) ? {...r,programId:pid} : r
+      )}));
+    }
+    setProgramForm({name:"", routineIds:[]});
+    setShowNewProgram(false);
+  }
+
+  function deleteProgram(id) {
+    // Detach all routines that belonged to this program
+    setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>r.programId===id?{...r,programId:""}:r)}));
+    setPrograms(prev=>({...prev,[uid]:prev[uid].filter(p=>p.id!==id)}));
+    setConfirmDeleteProgramId(null);
   }
 
   function deleteRoutine(id) {
@@ -1083,17 +1130,63 @@ export default function GymBro() {
         <div>
           {!activeSession ? (
             <div>
-              <div style={S.secTitle}>Start a session</div>
-              <button style={{...S.btnPrimary,marginBottom:8,width:"100%"}} onClick={()=>startSession(null)}>Freestyle session</button>
-              {userRoutines.filter(r=>!r.archived).map(r=>(
-                <div key={r.id} style={{...S.card,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div>
-                    <div style={{fontSize:14,fontWeight:500}}>{r.name}</div>
-                    <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{r.exercises.length} exercises</div>
+              {/* ── Active program or fallback ── */}
+              {(()=>{
+                const activeProg = (programs[uid]||[]).find(p=>p.id===activeProgramId);
+                const activeProgRoutines = activeProg
+                  ? userRoutines.filter(r=>r.programId===activeProg.id && !r.archived)
+                  : [];
+                return activeProg ? (
+                  <div style={{marginBottom:20}}>
+                    {/* Program header */}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                      <div>
+                        <div style={{fontSize:16,fontWeight:600}}>{activeProg.name}</div>
+                        <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>Active program · {activeProgRoutines.length} routine{activeProgRoutines.length!==1?"s":""}</div>
+                      </div>
+                      <button style={S.btn} onClick={()=>setTab("routines")}>Switch</button>
+                    </div>
+                    {/* Routines to start */}
+                    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:10}}>
+                      {activeProgRoutines.length===0 && (
+                        <div style={{...S.card,fontSize:13,color:"var(--color-text-secondary)",textAlign:"center" as const}}>No routines in this program yet.</div>
+                      )}
+                      {activeProgRoutines.map(r=>(
+                        <div key={r.id} style={{...S.card,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                          <div>
+                            <div style={{fontSize:14,fontWeight:500}}>{r.name}</div>
+                            <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{r.exercises.length} exercise{r.exercises.length!==1?"s":""}</div>
+                          </div>
+                          <button style={S.btnPrimary} onClick={()=>startSession(r)}>▶ Start</button>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Freestyle always available */}
+                    <button style={{...S.btn,width:"100%"}} onClick={()=>startSession(null)}>+ Freestyle session</button>
                   </div>
-                  <button style={S.btnPrimary} onClick={()=>startSession(r)}>Start</button>
-                </div>
-              ))}
+                ) : (
+                  /* No active program — show freestyle + nudge + standalone routines */
+                  <div style={{marginBottom:20}}>
+                    <div style={{fontSize:16,fontWeight:600,marginBottom:10}}>Start a session</div>
+                    <button style={{...S.btnPrimary,marginBottom:10,width:"100%"}} onClick={()=>startSession(null)}>+ Freestyle session</button>
+                    {(programs[uid]||[]).length>0 && (
+                      <div style={{...S.card,fontSize:13,color:"var(--color-text-secondary)",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                        <span>No active program selected</span>
+                        <button style={S.btn} onClick={()=>setTab("routines")}>Set one →</button>
+                      </div>
+                    )}
+                    {userRoutines.filter(r=>!r.archived && !r.programId).map(r=>(
+                      <div key={r.id} style={{...S.card,display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
+                        <div>
+                          <div style={{fontSize:14,fontWeight:500}}>{r.name}</div>
+                          <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{r.exercises.length} exercise{r.exercises.length!==1?"s":""}</div>
+                        </div>
+                        <button style={S.btnPrimary} onClick={()=>startSession(r)}>▶ Start</button>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
               <div style={S.secTitle}>Recent sessions</div>
               {userSessions.slice(0,5).map(s=>{
                 const isOpen = selectedSessionId === s.id;
@@ -1374,38 +1467,245 @@ export default function GymBro() {
         <div>
           {!showNewRoutine && (
             <>
-              {userRoutines.filter(r=>!r.archived).map(r=>(
-                <div key={r.id} style={S.card}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                    <span style={{fontSize:15,fontWeight:500}}>{r.name}</span>
-                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                      {confirmDeleteId===r.id ? (
+              {/* ═══════════════════════════════════════
+                  PROGRAMS SECTION
+              ═══════════════════════════════════════ */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <div style={{fontSize:16,fontWeight:600}}>Programs</div>
+                <button style={S.btn} onClick={()=>{setProgramForm({name:"",routineIds:[]});setEditProgramId(null);setShowNewProgram(true);}}>+ New program</button>
+              </div>
+
+              {(programs[uid]||[]).length===0 && (
+                <div style={{...S.card,color:"var(--color-text-secondary)",fontSize:13,textAlign:"center" as const,padding:"18px 12px"}}>
+                  No programs yet. Create one to group your routines.
+                </div>
+              )}
+
+              {(programs[uid]||[]).map(prog=>{
+                const progRoutines = userRoutines.filter(r=>r.programId===prog.id && !r.archived);
+                const isCollapsed = collapsedPrograms[prog.id];
+                const isEditingName = editProgramId===prog.id;
+                const isActive = activeProgramId===prog.id;
+                return (
+                  <div key={prog.id} style={{...S.card,marginBottom:12,padding:0,overflow:"hidden",borderColor:isActive?"var(--color-accent)":undefined,borderWidth:isActive?1.5:undefined}}>
+                    {/* Program header */}
+                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",background:"var(--color-bg-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+                      <button style={{...S.btn,padding:"2px 6px",fontSize:13}} onClick={()=>setCollapsedPrograms(p=>({...p,[prog.id]:!p[prog.id]}))}>
+                        {isCollapsed?"▶":"▼"}
+                      </button>
+                      {isEditingName ? (
                         <>
-                          <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Sure?</span>
-                          <button style={S.btnDanger} onClick={()=>{deleteRoutine(r.id);setConfirmDeleteId(null);}}>Yes</button>
-                          <button style={S.btn} onClick={()=>setConfirmDeleteId(null)}>No</button>
+                          <input autoFocus value={programForm.name} onChange={e=>setProgramForm(f=>({...f,name:e.target.value}))}
+                            onKeyDown={e=>{if(e.key==="Enter")saveProgram();if(e.key==="Escape")setEditProgramId(null);}}
+                            style={{...S.input,flex:1,marginBottom:0,padding:"3px 8px",fontSize:14}} />
+                          <button style={S.btnPrimary} onClick={saveProgram}>Save</button>
+                          <button style={S.btn} onClick={()=>setEditProgramId(null)}>Cancel</button>
                         </>
                       ) : (
                         <>
-                          <button style={S.btn} onClick={()=>editRoutine(r)}>Edit</button>
-                          <button style={S.btn} onClick={()=>archiveRoutine(r.id)}>Archive</button>
-                          <button style={S.btnDanger} onClick={()=>setConfirmDeleteId(r.id)}>Delete</button>
+                          <span style={{flex:1,fontSize:15,fontWeight:600}}>{prog.name}</span>
+                          {isActive
+                            ? <span style={{fontSize:11,padding:"2px 8px",borderRadius:8,background:"var(--color-accent)",color:"#fff",fontWeight:500}}>Active</span>
+                            : <button style={S.btn} onClick={()=>setActiveProgramId(prog.id)}>Set active</button>
+                          }
+                          <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{progRoutines.length} routine{progRoutines.length!==1?"s":""}</span>
+                          <button style={S.btn} onClick={()=>{setEditProgramId(prog.id);setProgramForm({name:prog.name,routineIds:[]});}}>Rename</button>
+                          <button style={S.btn} onClick={()=>{
+                            setAddRoutinesProgramId(prog.id);
+                            setAddRoutinesSelection([]);
+                            setCollapsedPrograms(p=>({...p,[prog.id]:false})); // expand so picker is visible
+                          }}>+ Add routines</button>
+                          {confirmDeleteProgramId===prog.id ? (
+                            <>
+                              <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Delete?</span>
+                              <button style={S.btnDanger} onClick={()=>deleteProgram(prog.id)}>Yes</button>
+                              <button style={S.btn} onClick={()=>setConfirmDeleteProgramId(null)}>No</button>
+                            </>
+                          ) : (
+                            <button style={S.btnDanger} onClick={()=>setConfirmDeleteProgramId(prog.id)}>Delete</button>
+                          )}
                         </>
                       )}
                     </div>
+                    {/* Routines inside this program */}
+                    {!isCollapsed && (
+                      <div style={{padding:"8px 10px",display:"flex",flexDirection:"column",gap:8}}>
+                        {/* Add routines picker */}
+                        {addRoutinesProgramId===prog.id && (()=>{
+                          // Show all non-archived routines not already in this program
+                          // Only show routines that are truly unassigned (standalone) and not archived
+                          const candidates = userRoutines.filter(r=>!r.archived && !r.programId);
+                          return (
+                            <div style={{background:"var(--color-bg-secondary)",borderRadius:"var(--border-radius-sm)",padding:"10px 10px 8px",border:"0.5px solid var(--color-accent)"}}>
+                              <div style={{fontSize:12,fontWeight:500,marginBottom:8,color:"var(--color-text-secondary)"}}>Select routines to add</div>
+                              {candidates.length===0 ? (
+                                <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:8}}>No standalone routines available to add.</div>
+                              ) : (
+                                <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:8}}>
+                                  {candidates.map(r=>{
+                                    const checked = addRoutinesSelection.includes(r.id);
+                                    const otherProg = (programs[uid]||[]).find(p=>p.id===r.programId);
+                                    return (
+                                      <label key={r.id} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:13,padding:"5px 6px",borderRadius:"var(--border-radius-sm)",background:checked?"var(--color-bg-primary)":"transparent"}}>
+                                        <input type="checkbox" checked={checked}
+                                          onChange={e=>setAddRoutinesSelection(s=>e.target.checked?[...s,r.id]:s.filter(id=>id!==r.id))}
+                                          style={{accentColor:"var(--color-accent)",width:15,height:15}}/>
+                                        <span style={{flex:1}}>{r.name}</span>
+                                        <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>{r.exercises?.length ?? 0} exercises</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              <div style={{display:"flex",gap:6}}>
+                                <button style={{...S.btnPrimary,flex:1}} onClick={()=>{
+                                  if (addRoutinesSelection.length>0) {
+                                    setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>
+                                      addRoutinesSelection.includes(r.id)?{...r,programId:prog.id}:r
+                                    )}));
+                                  }
+                                  setAddRoutinesProgramId(null);
+                                  setAddRoutinesSelection([]);
+                                }}>Add {addRoutinesSelection.length>0?`(${addRoutinesSelection.length})`:""}
+                                </button>
+                                <button style={S.btn} onClick={()=>{setAddRoutinesProgramId(null);setAddRoutinesSelection([]);}}>Cancel</button>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        {progRoutines.length===0 && addRoutinesProgramId!==prog.id && (
+                          <div style={{fontSize:13,color:"var(--color-text-secondary)",padding:"6px 2px"}}>No routines yet.</div>
+                        )}
+                        {progRoutines.map(r=>(
+                          <div key={r.id} style={S.cardSec}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                              <span style={{fontSize:14,fontWeight:500}}>{r.name}</span>
+                              <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap" as const,justifyContent:"flex-end" as const}}>
+                                {confirmDeleteId===r.id ? (
+                                  <>
+                                    <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Sure?</span>
+                                    <button style={S.btnDanger} onClick={()=>{deleteRoutine(r.id);setConfirmDeleteId(null);}}>Yes</button>
+                                    <button style={S.btn} onClick={()=>setConfirmDeleteId(null)}>No</button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button style={S.btnPrimary} onClick={()=>startSession(r)}>▶ Start</button>
+                                    <button style={S.btn} onClick={()=>editRoutine(r)}>Edit</button>
+                                    <button style={S.btn} onClick={()=>duplicateRoutine(r)}>Copy</button>
+                                    <button style={S.btn} onClick={()=>archiveRoutine(r.id)}>Archive</button>
+                                    <button style={S.btnDanger} onClick={()=>setConfirmDeleteId(r.id)}>Delete</button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            {r.exercises.map((e,i)=>(
+                              <div key={i} style={{fontSize:12,display:"flex",justifyContent:"space-between",marginBottom:2,color:"var(--color-text-secondary)"}}>
+                                <span style={{color:"var(--color-text-primary)"}}>{e.name}</span>
+                                <span>{e.sets} × {e.reps} @ {e.weight} lbs</span>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {r.exercises.map((e,i)=>(
-                    <div key={i} style={{fontSize:13,display:"flex",justifyContent:"space-between",marginBottom:2,color:"var(--color-text-secondary)"}}>
-                      <span style={{color:"var(--color-text-primary)"}}>{e.name}</span>
-                      <span>{e.sets} × {e.reps} reps @ {e.weight} lbs</span>
+                );
+              })}
+
+              {/* ── New program form ── */}
+              {showNewProgram && (()=>{
+                const availableRoutines = userRoutines.filter(r=>!r.archived);
+                return (
+                  <div style={{...S.card,marginBottom:16,borderColor:"var(--color-accent)"}}>
+                    <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>New training program</div>
+                    <div style={S.label}>Program name</div>
+                    <input autoFocus value={programForm.name} onChange={e=>setProgramForm(f=>({...f,name:e.target.value}))}
+                      onKeyDown={e=>{if(e.key==="Enter")saveProgram();}}
+                      placeholder="e.g. PPL, 5/3/1, Hypertrophy Block" style={{...S.input,marginBottom:12}}/>
+                    {availableRoutines.length>0 && (
+                      <>
+                        <div style={S.label}>Include routines</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+                          {availableRoutines.map(r=>{
+                            const checked = programForm.routineIds.includes(r.id);
+                            const currentProg = (programs[uid]||[]).find(p=>p.id===r.programId);
+                            return (
+                              <label key={r.id} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:13,padding:"6px 8px",borderRadius:"var(--border-radius-sm)",background:checked?"var(--color-bg-secondary)":"transparent"}}>
+                                <input type="checkbox" checked={checked}
+                                  onChange={e=>setProgramForm(f=>({...f,
+                                    routineIds:e.target.checked?[...f.routineIds,r.id]:f.routineIds.filter(id=>id!==r.id)
+                                  }))}
+                                  style={{accentColor:"var(--color-accent)",width:15,height:15}}/>
+                                <span style={{flex:1}}>{r.name}</span>
+                                {currentProg && <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>in {currentProg.name}</span>}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                    <div style={{display:"flex",gap:8}}>
+                      <button style={{...S.btnPrimary,flex:1}} onClick={saveProgram}>Create</button>
+                      <button style={S.btn} onClick={()=>setShowNewProgram(false)}>Cancel</button>
                     </div>
-                  ))}
-                </div>
-              ))}
-              <button style={{...S.btnPrimary,marginTop:4}} onClick={()=>{setRoutineForm({name:"",exercises:[]});setEditRoutineId(null);setShowNewRoutine(true);}}>+ New routine</button>
+                  </div>
+                );
+              })()}
+
+              {/* ═══════════════════════════════════════
+                  STANDALONE ROUTINES SECTION
+              ═══════════════════════════════════════ */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"20px 0 10px"}}>
+                <div style={{fontSize:16,fontWeight:600}}>Standalone routines</div>
+                <button style={S.btnPrimary} onClick={()=>{setRoutineForm({name:"",exercises:[],programId:""});setEditRoutineId(null);setShowNewRoutine(true);}}>+ New routine</button>
+              </div>
+
+              {(()=>{
+                const standalone = userRoutines.filter(r=>!r.programId && !r.archived);
+                return standalone.length===0 ? (
+                  <div style={{...S.card,color:"var(--color-text-secondary)",fontSize:13,textAlign:"center" as const,padding:"18px 12px"}}>
+                    No standalone routines. Create one or assign existing routines to a program.
+                  </div>
+                ) : (
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    {standalone.map(r=>(
+                      <div key={r.id} style={S.card}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                          <span style={{fontSize:15,fontWeight:500}}>{r.name}</span>
+                          <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap" as const,justifyContent:"flex-end" as const}}>
+                            {confirmDeleteId===r.id ? (
+                              <>
+                                <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Sure?</span>
+                                <button style={S.btnDanger} onClick={()=>{deleteRoutine(r.id);setConfirmDeleteId(null);}}>Yes</button>
+                                <button style={S.btn} onClick={()=>setConfirmDeleteId(null)}>No</button>
+                              </>
+                            ) : (
+                              <>
+                                <button style={S.btnPrimary} onClick={()=>startSession(r)}>▶ Start</button>
+                                <button style={S.btn} onClick={()=>editRoutine(r)}>Edit</button>
+                                <button style={S.btn} onClick={()=>duplicateRoutine(r)}>Copy</button>
+                                <button style={S.btn} onClick={()=>archiveRoutine(r.id)}>Archive</button>
+                                <button style={S.btnDanger} onClick={()=>setConfirmDeleteId(r.id)}>Delete</button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        {r.exercises.map((e,i)=>(
+                          <div key={i} style={{fontSize:13,display:"flex",justifyContent:"space-between",marginBottom:2,color:"var(--color-text-secondary)"}}>
+                            <span style={{color:"var(--color-text-primary)"}}>{e.name}</span>
+                            <span>{e.sets} × {e.reps} reps @ {e.weight} lbs</span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* ── Archive ── */}
               {userRoutines.some(r=>r.archived) && (
                 <div style={{marginTop:"1.5rem"}}>
-                  <button style={{...S.btn,width:"100%",textAlign:"left",display:"flex",justifyContent:"space-between"}} onClick={()=>setShowArchived(v=>!v)}>
+                  <button style={{...S.btn,width:"100%",textAlign:"left" as const,display:"flex",justifyContent:"space-between"}} onClick={()=>setShowArchived(v=>!v)}>
                     <span>Archive ({userRoutines.filter(r=>r.archived).length})</span>
                     <span>{showArchived?"▲":"▼"}</span>
                   </button>
@@ -1438,6 +1738,16 @@ export default function GymBro() {
               <div style={{fontSize:14,fontWeight:500,marginBottom:10}}>{editRoutineId?"Edit routine":"New routine"}</div>
               <div style={S.label}>Routine name</div>
               <input value={routineForm.name} onChange={e=>setRoutineForm(f=>({...f,name:e.target.value}))} placeholder="e.g. Push Day" style={S.input}/>
+              {(programs[uid]||[]).length>0 && (
+                <>
+                  <div style={{...S.label,marginTop:10}}>Program (optional)</div>
+                  <select value={routineForm.programId||""} onChange={e=>setRoutineForm(f=>({...f,programId:e.target.value}))}
+                    style={{...S.input,marginBottom:4}}>
+                    <option value="">— Standalone —</option>
+                    {(programs[uid]||[]).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </>
+              )}
               <div style={{...S.secTitle,marginTop:12}}>Exercises</div>
               {routineForm.exercises.map((ex,i)=>(
                 <div key={i} style={{...S.cardSec,marginBottom:6}}>
