@@ -1,3 +1,23 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
 node_modules/
+
+# ── Build output ──────────────────────────────────────────────────────────────
 dist/
+
+# ── PocketBase ────────────────────────────────────────────────────────────────
+# Binary (platform-specific, downloaded separately — see DEV.md)
+pocketbase
+
+# Live database & storage (never commit real data)
 pb_data/
+
+# ── OS junk ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Personal data ─────────────────────────────────────────────────────────────
+historical-data-to-import
+
+# ── Local env / secrets ───────────────────────────────────────────────────────
+.env
+.env.local
