@@ -22,6 +22,12 @@ export interface GymProfile {
   customExercises: any[];
   theme: string;
   activeProgramId: string;
+  // Extended fields
+  birthDate: string;
+  weightUnit: string;
+  measureUnit: string;
+  weights: any[];
+  bodyMeasurements: any[];
 }
 
 export interface GymProgram {
