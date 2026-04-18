@@ -17,6 +17,10 @@ Thumbs.db
 
 # ── Personal data ─────────────────────────────────────────────────────────────
 historical-data-to-import
+# Data files dropped into scripts/ for one-off imports (keep the .mjs scripts themselves)
+scripts/*.csv
+scripts/*.json
+scripts/*.txt
 
 # ── Local env / secrets ───────────────────────────────────────────────────────
 .env
