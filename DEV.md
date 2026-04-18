@@ -13,7 +13,7 @@ Vite automatically proxies any `/api/` or `/_/` request to PocketBase, so the ap
 
 ---
 
-## Starting the dev environment
+## Starting the dev environment (local — no Docker)
 
 Open **two terminals** in the project folder:
 
@@ -28,6 +28,9 @@ npm run dev
 ```
 
 Then open **http://localhost:5173**.
+
+> `docker-compose.yml` is for the production server only.
+> Local dev runs Vite + PocketBase directly — faster and no rebuild needed on every change.
 
 > The `pocketbase` binary is not in git — download it once from https://pocketbase.io/docs/
 > and drop it in the project root. It's a single file, no install needed.
