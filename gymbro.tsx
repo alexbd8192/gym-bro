@@ -1,4 +1,12 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import pb from './src/pb';
+import {
+  login as pbLogin, logout as pbLogout, fetchAllUserData,
+  createSession as apiCreateSession, updateSession as apiUpdateSession, deleteSession as apiDeleteSession,
+  createRoutine as apiCreateRoutine, updateRoutine as apiUpdateRoutine, deleteRoutine as apiDeleteRoutine,
+  createProgram as apiCreateProgram, updateProgram as apiUpdateProgram, deleteProgram as apiDeleteProgram,
+  saveProfile as apiSaveProfile, importFromLocalStorage,
+} from './src/api';
 
 // ─── EXERCISE DATABASE (80+) ───────────────────────────────────────────────
 const DB = [
@@ -338,6 +346,108 @@ const DB = [
 const EQ_TYPES = ["All", "Barbell", "EZ Bar", "Smith Machine", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell", "Rings", "Bands", "Swiss Ball", "Trap Bar", "Landmine", "Medicine Ball", "TRX", "No Equipment"];
 const MUSCLES = ["All", ...new Set(DB.map(e => e.muscle)).values()];
 
+// ─── STARTER ROUTINE TEMPLATES ────────────────────────────────────────────
+const ex = (name:string, sets:number, reps:number, weight:number=0) => ({name,sets,reps,weight});
+const ROUTINE_TEMPLATES = [
+  {
+    name: "Push Day (PPL)",
+    tag: "Chest · Shoulders · Triceps",
+    exercises: [
+      ex("Bench Press",          4, 5,  135),
+      ex("Overhead Press",       3, 8,  75),
+      ex("Incline Dumbbell Press",3,10, 50),
+      ex("Lateral Raise",        4, 15, 20),
+      ex("Tricep Pushdown",      3, 12, 40),
+      ex("Skull Crusher",        3, 10, 60),
+    ],
+  },
+  {
+    name: "Pull Day (PPL)",
+    tag: "Back · Biceps",
+    exercises: [
+      ex("Deadlift",       3, 5,  225),
+      ex("Barbell Row",    4, 6,  135),
+      ex("Lat Pulldown",   3, 10, 100),
+      ex("Cable Row",      3, 12, 80),
+      ex("Face Pull",      3, 15, 30),
+      ex("Barbell Curl",   3, 10, 65),
+    ],
+  },
+  {
+    name: "Leg Day (PPL)",
+    tag: "Quads · Hamstrings · Calves",
+    exercises: [
+      ex("Back Squat",       4, 5,  185),
+      ex("Romanian Deadlift",3, 10, 135),
+      ex("Leg Press",        3, 12, 270),
+      ex("Leg Curl",         3, 12, 70),
+      ex("Leg Extension",    3, 15, 70),
+      ex("Seated Calf Raise",4, 15, 90),
+    ],
+  },
+  {
+    name: "Upper Body",
+    tag: "Upper/Lower split — push + pull",
+    exercises: [
+      ex("Bench Press",       4, 6,  135),
+      ex("Barbell Row",       4, 6,  115),
+      ex("Overhead Press",    3, 8,  75),
+      ex("Lat Pulldown",      3, 10, 90),
+      ex("Dumbbell Curl",     3, 12, 30),
+      ex("Tricep Pushdown",   3, 12, 35),
+    ],
+  },
+  {
+    name: "Lower Body",
+    tag: "Upper/Lower split — quads + posterior chain",
+    exercises: [
+      ex("Back Squat",        4, 6,  185),
+      ex("Romanian Deadlift", 3, 8,  135),
+      ex("Hip Thrust",        3, 10, 135),
+      ex("Leg Curl",          3, 12, 65),
+      ex("Leg Extension",     3, 15, 65),
+      ex("Seated Calf Raise", 4, 15, 90),
+    ],
+  },
+  {
+    name: "Full Body",
+    tag: "3-day total body — big 4 + accessories",
+    exercises: [
+      ex("Back Squat",    3, 5, 185),
+      ex("Bench Press",   3, 5, 135),
+      ex("Barbell Row",   3, 5, 115),
+      ex("Overhead Press",3, 8, 75),
+      ex("Deadlift",      1, 5, 225),
+      ex("Pull-Up",       3, 8, 0),
+    ],
+  },
+  {
+    name: "Glutes & Hamstrings",
+    tag: "Posterior chain focus",
+    exercises: [
+      ex("Hip Thrust",        4, 10, 135),
+      ex("Romanian Deadlift", 3, 10, 115),
+      ex("Sumo Deadlift",     3, 6,  185),
+      ex("Leg Curl",          3, 12, 65),
+      ex("Dumbbell RDL",      3, 12, 40),
+      ex("Glute Bridge",      3, 15, 0),
+    ],
+  },
+  {
+    name: "Arms & Shoulders",
+    tag: "Biceps · Triceps · Delts",
+    exercises: [
+      ex("Overhead Press",      3, 8,  75),
+      ex("Lateral Raise",       4, 15, 20),
+      ex("Face Pull",           3, 15, 30),
+      ex("Barbell Curl",        3, 10, 65),
+      ex("Hammer Curl",         3, 12, 30),
+      ex("Skull Crusher",       3, 10, 60),
+      ex("Tricep Pushdown",     3, 12, 35),
+    ],
+  },
+];
+
 // ─── PLATE CALCULATOR CONSTANTS ───────────────────────────────────────────
 // Bar weights stored in lbs; converted to kg on display when needed
 const BARS = [
@@ -365,85 +475,7 @@ function calcPlates(target, barW, plates, maxPairs: Record<number,number> = {}) 
   return res;
 }
 
-// ─── STORAGE (in-memory) ──────────────────────────────────────────────────
-const DEMO_USERS = [
-  {id:"alex", name:"Alex", password:"1234"},
-  {id:"gf",   name:"Gf",   password:"1234"},
-];
-
 const today = new Date().toISOString().split("T")[0];
-const d = (n) => { const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().split("T")[0]; };
-
-const DEMO_SESSIONS = {
-  alex: [
-    {id:"s1", date:d(2), routineId:null, routineName:"Push Day", exercises:[
-      {name:"Bench Press", sets:[{w:185,r:5},{w:185,r:5},{w:185,r:4}]},
-      {name:"Overhead Press", sets:[{w:115,r:8},{w:115,r:7},{w:115,r:6}]},
-      {name:"Incline Dumbbell Press", sets:[{w:70,r:10},{w:70,r:9}]},
-      {name:"Tricep Pushdown", sets:[{w:60,r:12},{w:60,r:12}]},
-      {name:"Cable Fly", sets:[{w:40,r:15},{w:40,r:15}]},
-    ]},
-    {id:"s2", date:d(4), routineId:null, routineName:"Pull Day", exercises:[
-      {name:"Deadlift", sets:[{w:315,r:3},{w:315,r:3},{w:295,r:3}]},
-      {name:"Barbell Row", sets:[{w:185,r:8},{w:185,r:8},{w:185,r:6}]},
-      {name:"Lat Pulldown", sets:[{w:130,r:10},{w:130,r:10}]},
-      {name:"Dumbbell Curl", sets:[{w:40,r:12},{w:40,r:11}]},
-    ]},
-    {id:"s3", date:d(6), routineId:null, routineName:"Legs", exercises:[
-      {name:"Back Squat", sets:[{w:225,r:5},{w:225,r:5},{w:225,r:4}]},
-      {name:"Romanian Deadlift", sets:[{w:185,r:8},{w:185,r:8}]},
-      {name:"Leg Press", sets:[{w:360,r:12},{w:360,r:10}]},
-      {name:"Leg Curl", sets:[{w:90,r:12},{w:90,r:12}]},
-    ]},
-    {id:"s4", date:d(9), routineId:null, routineName:"Push Day", exercises:[
-      {name:"Bench Press", sets:[{w:180,r:5},{w:180,r:5},{w:180,r:5}]},
-      {name:"Overhead Press", sets:[{w:110,r:8},{w:110,r:8}]},
-    ]},
-  ],
-  gf: [
-    {id:"g1", date:d(3), routineId:null, routineName:"Lower A", exercises:[
-      {name:"Hip Thrust", sets:[{w:135,r:10},{w:135,r:10},{w:135,r:8}]},
-      {name:"Leg Press", sets:[{w:180,r:12},{w:180,r:12}]},
-      {name:"Leg Curl", sets:[{w:70,r:12},{w:70,r:12}]},
-    ]},
-  ],
-};
-
-const DEMO_ROUTINES = {
-  alex:[
-    {id:"r1",name:"Push Day",programId:"p1",exercises:[
-      {name:"Bench Press",sets:3,reps:"5",weight:"185"},
-      {name:"Overhead Press",sets:3,reps:"8",weight:"115"},
-      {name:"Incline Dumbbell Press",sets:3,reps:"10",weight:"70"},
-      {name:"Tricep Pushdown",sets:3,reps:"12",weight:"60"},
-      {name:"Cable Fly",sets:2,reps:"15",weight:"40"},
-    ]},
-    {id:"r2",name:"Pull Day",programId:"p1",exercises:[
-      {name:"Deadlift",sets:3,reps:"3",weight:"315"},
-      {name:"Barbell Row",sets:3,reps:"8",weight:"185"},
-      {name:"Lat Pulldown",sets:3,reps:"10",weight:"130"},
-      {name:"Dumbbell Curl",sets:3,reps:"12",weight:"40"},
-    ]},
-    {id:"r3",name:"Legs",programId:"p1",exercises:[
-      {name:"Back Squat",sets:3,reps:"5",weight:"225"},
-      {name:"Romanian Deadlift",sets:3,reps:"8",weight:"185"},
-      {name:"Leg Press",sets:3,reps:"12",weight:"360"},
-      {name:"Leg Curl",sets:3,reps:"12",weight:"90"},
-    ]},
-  ],
-  gf:[
-    {id:"g1",name:"Lower A",programId:"",exercises:[
-      {name:"Hip Thrust",sets:3,reps:"10",weight:"135"},
-      {name:"Leg Press",sets:3,reps:"12",weight:"180"},
-      {name:"Leg Curl",sets:3,reps:"12",weight:"70"},
-    ]},
-  ],
-};
-
-const DEMO_PROGRAMS = {
-  alex: [{id:"p1", name:"PPL"}],
-  gf:   [],
-};
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────
 
@@ -654,15 +686,6 @@ const S = {
   subLabel: {fontSize:10,fontWeight:600,letterSpacing:"0.08em",textTransform:"uppercase" as const,color:"var(--color-text-secondary)",marginBottom:6},
 };
 
-// ─── STORAGE INIT ─────────────────────────────────────────────────────────
-function loadSaved() {
-  try {
-    const raw = localStorage.getItem("gymbro_state");
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
-  return null;
-}
-const _saved = loadSaved();
 
 function calcAge(birthDate:string) {
   if (!birthDate) return null;
@@ -785,19 +808,21 @@ function RestForm({form, setForm, onSave, onCancel}: {form:any, setForm:any, onS
 }
 
 // ─── APP ──────────────────────────────────────────────────────────────────
-// Single root component — all state lives here and is persisted to localStorage
 export default function GymBro() {
-  // ── Core data — persisted to localStorage ──
-  const [users, setUsers] = useState(_saved?.users ?? DEMO_USERS);
-  const [sessions, setSessions] = useState(_saved?.sessions ?? DEMO_SESSIONS);   // keyed by userId
-  const [routines, setRoutines] = useState(_saved?.routines ?? DEMO_ROUTINES);   // keyed by userId
-  const [programs, setPrograms] = useState(_saved?.programs ?? DEMO_PROGRAMS);   // keyed by userId
-  const [loggedIn, setLoggedIn] = useState(_saved?.loggedIn ?? null);            // {id, name} or null
+  // ── Core data — loaded from PocketBase on login ──
+  const [sessions, setSessions] = useState<Record<string,any[]>>({});   // keyed by userId
+  const [routines, setRoutines] = useState<Record<string,any[]>>({});   // keyed by userId
+  const [programs, setPrograms] = useState<Record<string,any[]>>({});   // keyed by userId
 
-  // ── Auth UI state ──
-  const [authMode, setAuthMode] = useState("login");  // "login" | "register"
-  const [authForm, setAuthForm] = useState({name:"",password:""});
-  const [authErr, setAuthErr] = useState("");
+  // ── Auth / loading ──
+  const [pbAuthed, setPbAuthed] = useState(pb.authStore.isValid);
+  const [loading, setLoading] = useState(pb.authStore.isValid); // true while fetching initial data
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [profileRecordId, setProfileRecordId] = useState<string|null>(null);
+  const [importing, setImporting] = useState(false);
+  const [loadError, setLoadError] = useState<string|null>(null);
 
   // ── Navigation ──
   const [tab, setTab] = useState("dashboard");
@@ -807,7 +832,7 @@ export default function GymBro() {
   const [barIdx, setBarIdx] = useState(0);           // index into BARS array
   const [targetW, setTargetW] = useState(135);       // target weight (number, used for calculation)
   const [targetWInput, setTargetWInput] = useState("135"); // raw string shown in the text input
-  const [plateInventory, setPlateInventory] = useState<Record<string,number>>(_saved?.plateInventory ?? {});
+  const [plateInventory, setPlateInventory] = useState<Record<string,number>>({});
 
   // DB tab state
   const [dbSearch, setDbSearch] = useState("");
@@ -850,6 +875,7 @@ export default function GymBro() {
 
   // ── Routines UI state ──
   const [showArchived, setShowArchived] = useState(false);       // toggle archived routines visibility
+  const [showTemplates, setShowTemplates] = useState(false);    // toggle starter templates panel
   const [showNewProgram, setShowNewProgram] = useState(false);   // program creation form open
   const [programForm, setProgramForm] = useState({name:"", routineIds:[] as string[], cycleActiveWeeks:3, cycleSessionsPerWeek:3, cycleHasRestWeek:true});  // new/edit program form
   const [editProgramId, setEditProgramId] = useState(null);      // non-null when renaming a program
@@ -857,15 +883,15 @@ export default function GymBro() {
   const [confirmDeleteProgramId, setConfirmDeleteProgramId] = useState(null); // confirm before deleting a program
   const [addRoutinesProgramId, setAddRoutinesProgramId] = useState<string|null>(null);   // program whose "add routines" picker is open
   const [addRoutinesSelection, setAddRoutinesSelection] = useState<string[]>([]);         // routine ids checked in that picker
-  const [activeProgramId, setActiveProgramId] = useState<string|null>(_saved?.activeProgramId ?? null); // program currently being followed
+  const [activeProgramId, setActiveProgramId] = useState<string|null>(null);
 
   // ── Custom exercises — user-created, merged with built-in DB ──
-  const [customExercises, setCustomExercises] = useState<any[]>(_saved?.customExercises ?? []);
+  const [customExercises, setCustomExercises] = useState<any[]>([]);
   const [showCustomForm, setShowCustomForm] = useState(false); // form open in DB tab
   const [customForm, setCustomForm] = useState({name:"", muscle:"Chest", eq:"Barbell", type:"Isolation"});
 
-  const [theme, setTheme] = useState(_saved?.theme ?? "matrix");
-  const [profiles, setProfiles] = useState<Record<string,any>>(_saved?.profiles ?? {});
+  const [theme, setTheme] = useState("daylight");
+  const [profiles, setProfiles] = useState<Record<string,any>>({});
   const [profileWeightInput, setProfileWeightInput] = useState("");
   const [profileHeightFt, setProfileHeightFt] = useState("");   // imperial height input (feet part)
   const [profileHeightIn, setProfileHeightIn] = useState("");   // imperial height input (inches part)
@@ -887,10 +913,108 @@ export default function GymBro() {
     e.name.toLowerCase().includes(dbSearch.toLowerCase())
   ),[fullDB,dbEq,dbMuscle,dbSearch]);
 
-  // ── PERSIST ──
-  useEffect(()=>{
-    localStorage.setItem("gymbro_state", JSON.stringify({users,sessions,routines,programs,activeProgramId,loggedIn,theme,profiles,plateInventory,customExercises}));
-  },[users,sessions,routines,programs,activeProgramId,loggedIn,theme]);
+  // ── POCKETBASE: load all user data after login ──
+  const uid = pb.authStore.record?.id ?? "";
+
+  const loadData = useCallback(async () => {
+    const userId = pb.authStore.record?.id ?? "";
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const data = await fetchAllUserData(userId);
+      setSessions({ [userId]: data.sessions });
+      setRoutines({ [userId]: data.routines });
+      setPrograms({ [userId]: data.programs });
+      if (data.profile) {
+        setProfileRecordId(data.profile.id ?? null);
+        setProfiles({ [userId]: {
+          unit:      data.profile.unit      || "metric",
+          height:    data.profile.height    || 0,
+          weight:    data.profile.weight    || 0,
+          dob:       data.profile.dob       || "",
+          waist:     data.profile.waist     || 0,
+          hips:      data.profile.hips      || 0,
+          chest:     data.profile.chest     || 0,
+          arm:       data.profile.arm       || 0,
+          bodyFat:   data.profile.bodyFat   || 0,
+          // Extended profile fields stored in the profiles record
+          birthDate:        data.profile.birthDate        || "",
+          weightUnit:       data.profile.weightUnit       || "lbs",
+          measureUnit:      data.profile.measureUnit      || "metric",
+          weights:          data.profile.weights          || [],
+          bodyMeasurements: data.profile.bodyMeasurements || [],
+        }});
+        setTheme(data.profile.theme || "daylight");
+        setPlateInventory(data.profile.plateInventory || {});
+        setCustomExercises(data.profile.customExercises || []);
+        setActiveProgramId(data.profile.activeProgramId || null);
+      }
+    } catch(e: any) {
+      console.error("Failed to load data:", e);
+      setLoadError(e?.message || String(e));
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (pb.authStore.isValid) loadData();
+  }, [loadData]);
+
+  async function handleLogin(e?: any) {
+    e?.preventDefault();
+    setLoginError("");
+    try {
+      await pbLogin(loginEmail, loginPassword);
+      setPbAuthed(true);
+      await loadData();
+    } catch(err: any) {
+      setLoginError(err?.message || "Invalid email or password");
+    }
+  }
+
+  function handleLogout() {
+    pbLogout();
+    setPbAuthed(false);
+    setSessions({}); setRoutines({}); setPrograms({});
+    setProfiles({}); setPlateInventory({}); setCustomExercises([]);
+    setActiveProgramId(null); setProfileRecordId(null); setTheme("daylight");
+    setTab("dashboard");
+  }
+
+  // ── Profile API save — call after any profile mutation ──
+  async function saveProfileToAPI(updates: Record<string,any>) {
+    const userId = pb.authStore.record?.id ?? "";
+    if (!userId) return;
+    const current = profiles[userId] || {};
+    const full = {
+      userId,
+      unit:             current.unit            || "metric",
+      height:           current.height          || 0,
+      weight:           current.weight          || 0,
+      dob:              current.dob             || "",
+      waist:            current.waist           || 0,
+      hips:             current.hips            || 0,
+      chest:            current.chest           || 0,
+      arm:              current.arm             || 0,
+      bodyFat:          current.bodyFat         || 0,
+      birthDate:        current.birthDate        || "",
+      weightUnit:       current.weightUnit       || "lbs",
+      measureUnit:      current.measureUnit      || "metric",
+      weights:          current.weights          || [],
+      bodyMeasurements: current.bodyMeasurements || [],
+      plateInventory,
+      customExercises,
+      theme,
+      activeProgramId:  activeProgramId || "",
+      ...updates,
+    };
+    try {
+      const saved = await apiSaveProfile({ ...full, id: profileRecordId ?? undefined });
+      if (!profileRecordId && saved.id) setProfileRecordId(saved.id);
+    } catch(e) {
+      console.error("Failed to save profile:", e);
+    }
+  }
 
   useEffect(()=>{
     const t = THEMES[theme] || THEMES.matrix;
@@ -915,32 +1039,78 @@ export default function GymBro() {
     return ()=>clearInterval(id);
   },[activeSession?.startedAt]);
 
-  if (!loggedIn) return <AuthScreen users={users} setUsers={setUsers} sessions={sessions} setSessions={setSessions} routines={routines} setRoutines={setRoutines} authMode={authMode} setAuthMode={setAuthMode} authForm={authForm} setAuthForm={setAuthForm} authErr={authErr} setAuthErr={setAuthErr} onLogin={u=>{setLoggedIn(u);setAuthErr("");}} theme={theme} setTheme={setTheme} />;
+  // ── Login screen ──
+  if (!pbAuthed) return (
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--color-body-bg)",fontFamily:"var(--font-mono)"}}>
+      <div style={{width:320,padding:"2rem",background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-lg)"}}>
+        <div style={{fontSize:22,fontWeight:800,letterSpacing:"0.08em",textTransform:"uppercase",textAlign:"center",marginBottom:24}}>
+          💪 <span style={{textDecoration:"underline"}}>Gym Bro</span> 💪
+        </div>
+        <form onSubmit={handleLogin}>
+          <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:4}}>Email</div>
+          <input type="email" autoComplete="username" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)}
+            placeholder="you@example.com" style={{...S.input,marginBottom:10}} />
+          <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:4}}>Password</div>
+          <input type="password" autoComplete="current-password" value={loginPassword} onChange={e=>setLoginPassword(e.target.value)}
+            placeholder="••••••••" style={{...S.input,marginBottom:16}} />
+          {loginError && <div style={{fontSize:12,color:"#e05",marginBottom:10}}>{loginError}</div>}
+          <button type="submit" style={{...S.btnPrimary,width:"100%",padding:"10px"}}>Sign in</button>
+        </form>
+        <div style={{marginTop:16,textAlign:"center",fontSize:11,color:"var(--color-text-secondary)"}}>
+          Accounts are managed by an admin.
+        </div>
+        <div style={{marginTop:16}}>
+          <select value={theme} onChange={e=>setTheme(e.target.value)}
+            style={{width:"100%",background:"var(--color-background-secondary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",padding:"4px 8px",fontSize:13,cursor:"pointer"}}>
+            {Object.entries(THEMES).map(([k,v])=><option key={k} value={k}>{v.emoji} {v.name}</option>)}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
 
-  const uid = loggedIn.id;
+  // ── Loading screen (after login, fetching data) ──
+  if (loading) return (
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--color-body-bg)",fontFamily:"var(--font-mono)",color:"var(--color-text-secondary)",fontSize:14}}>
+      Loading…
+    </div>
+  );
+
+  // ── Load error screen ──
+  if (loadError) return (
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"var(--color-body-bg)",fontFamily:"var(--font-mono)",padding:"2rem",gap:16}}>
+      <div style={{fontSize:16,fontWeight:700,color:"#e05"}}>Failed to load data</div>
+      <div style={{fontSize:13,color:"var(--color-text-secondary)",maxWidth:360,textAlign:"center"}}>{loadError}</div>
+      <button style={{...S.btn,marginTop:8}} onClick={()=>{setLoadError(null);loadData();}}>Retry</button>
+      <button style={{...S.btn}} onClick={handleLogout}>Sign out</button>
+    </div>
+  );
   const userSessions = sessions[uid]||[];
   const userRoutines = routines[uid]||[];
   const prs = getPRs(userSessions);
 
   // ── SAVE SESSION ──
-  function saveSession() {
+  async function saveSession() {
     if (!activeSession || activeSession.exercises.length===0) return;
     const durationSecs = activeSession.startedAt
       ? Math.round((Date.now() - activeSession.startedAt) / 1000)
       : undefined;
-    const newS = {
-      id:"s"+Date.now(),
-      date:today,
-      routineName:activeSession.routineName||"Freestyle",
-      exercises:activeSession.exercises.filter(e=>e.sets.length>0),
+    const sessionData = {
+      userId: uid,
+      date: today,
+      type: "strength" as const,
+      routineName: activeSession.routineName||"Freestyle",
+      exercises: activeSession.exercises.filter(e=>e.sets.length>0),
       comment: sessionComment.trim() || undefined,
       duration: durationSecs,
     };
     if (editSessionId) {
-      setSessions(prev=>({...prev,[uid]:prev[uid].map(s=>s.id===editSessionId?{...newS,id:editSessionId}:s)}));
+      const updated = await apiUpdateSession(editSessionId, sessionData);
+      setSessions(prev=>({...prev,[uid]:prev[uid].map(s=>s.id===editSessionId?updated:s)}));
       setEditSessionId(null);
     } else {
-      setSessions(prev=>({...prev,[uid]:[newS,...(prev[uid]||[])]}));
+      const created = await apiCreateSession(sessionData);
+      setSessions(prev=>({...prev,[uid]:[created,...(prev[uid]||[])]}));
     }
     setActiveSession(null);
     setShowCommentStep(false);
@@ -962,34 +1132,39 @@ export default function GymBro() {
     setTab("log");
   }
 
-  function logCardio() {
+  async function logCardio() {
     if (!cardioForm.durationMins) return;
-    const newS = {
-      id:"s"+Date.now(), date:cardioForm.date||today, type:"cardio",
-      routineName:cardioForm.activity,
-      activity:cardioForm.activity,
-      durationMins:Number(cardioForm.durationMins),
-      distance:cardioForm.distance ? Number(cardioForm.distance) : undefined,
-      distanceUnit:cardioForm.distanceUnit,
-      notes:cardioForm.notes.trim()||undefined,
-    };
-    setSessions(prev=>({...prev,[uid]:[newS,...(prev[uid]||[])].sort((a,b)=>a.date<b.date?1:-1)}));
+    const created = await apiCreateSession({
+      userId: uid,
+      date: cardioForm.date||today,
+      type: "cardio" as const,
+      routineName: cardioForm.activity,
+      activity: cardioForm.activity,
+      durationMins: Number(cardioForm.durationMins),
+      distance: cardioForm.distance ? Number(cardioForm.distance) : undefined,
+      distanceUnit: cardioForm.distanceUnit,
+      notes: cardioForm.notes.trim()||undefined,
+    });
+    setSessions(prev=>({...prev,[uid]:[created,...(prev[uid]||[])].sort((a,b)=>a.date<b.date?1:-1)}));
     setShowCardioForm(false);
     setCardioForm({activity:"Run",durationMins:"",distance:"",distanceUnit:"km",notes:"",date:today});
   }
 
-  function logRestDay() {
-    const newS = {
-      id:"s"+Date.now(), date:restForm.date||today, type:"rest",
-      routineName:"Rest day",
-      notes:restForm.notes.trim()||undefined,
-    };
-    setSessions(prev=>({...prev,[uid]:[newS,...(prev[uid]||[])].sort((a,b)=>a.date<b.date?1:-1)}));
+  async function logRestDay() {
+    const created = await apiCreateSession({
+      userId: uid,
+      date: restForm.date||today,
+      type: "rest" as const,
+      routineName: "Rest day",
+      notes: restForm.notes.trim()||undefined,
+    });
+    setSessions(prev=>({...prev,[uid]:[created,...(prev[uid]||[])].sort((a,b)=>a.date<b.date?1:-1)}));
     setShowRestForm(false);
     setRestForm({date:today,notes:""});
   }
 
-  function deleteSession(id:string) {
+  async function deleteSession(id:string) {
+    await apiDeleteSession(id);
     setSessions(prev=>({...prev,[uid]:(prev[uid]||[]).filter(s=>s.id!==id)}));
     setConfirmDeleteSessionId(null);
   }
@@ -1003,13 +1178,25 @@ export default function GymBro() {
   }
 
   // ── SAVE ROUTINE ──
-  function saveRoutine() {
+  async function saveRoutine() {
     if (!routineForm.name || routineForm.exercises.length===0) return;
     if (editRoutineId) {
-      setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>r.id===editRoutineId?{...routineForm,id:editRoutineId}:r)}));
+      const updated = await apiUpdateRoutine(editRoutineId, {
+        name: routineForm.name,
+        exercises: routineForm.exercises,
+        programId: routineForm.programId,
+      });
+      setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>r.id===editRoutineId?{...r,...updated}:r)}));
       setEditRoutineId(null);
     } else {
-      setRoutines(prev=>({...prev,[uid]:[...(prev[uid]||[]),{...routineForm,id:"r"+Date.now()}]}));
+      const created = await apiCreateRoutine({
+        userId: uid,
+        name: routineForm.name,
+        exercises: routineForm.exercises,
+        programId: routineForm.programId,
+        archived: false,
+      });
+      setRoutines(prev=>({...prev,[uid]:[...(prev[uid]||[]),created]}));
     }
     setRoutineForm({name:"",exercises:[],programId:""});
     setShowNewRoutine(false);
@@ -1021,54 +1208,70 @@ export default function GymBro() {
     setShowNewRoutine(true);
   }
 
-  // Duplicate a routine — clones it with a " (copy)" name suffix
-  function duplicateRoutine(r) {
-    const copy = {...r, id:"r"+Date.now(), name:r.name+" (copy)"};
-    setRoutines(prev=>({...prev,[uid]:[...(prev[uid]||[]),copy]}));
+  async function duplicateRoutine(r) {
+    const created = await apiCreateRoutine({
+      userId: uid,
+      name: r.name+" (copy)",
+      exercises: r.exercises,
+      programId: r.programId || "",
+      archived: false,
+    });
+    setRoutines(prev=>({...prev,[uid]:[...(prev[uid]||[]),created]}));
   }
 
   // Program CRUD
-  function saveProgram() {
+  async function saveProgram() {
     if (!programForm.name.trim()) return;
-    const pid = editProgramId ?? ("p"+Date.now());
     const cycleWeeks = [
       ...Array.from({length:programForm.cycleActiveWeeks}, ()=>({type:"active" as const, sessions:programForm.cycleSessionsPerWeek})),
       ...(programForm.cycleHasRestWeek ? [{type:"rest" as const, sessions:0}] : []),
     ];
     if (editProgramId) {
-      setPrograms(prev=>({...prev,[uid]:prev[uid].map(p=>p.id===editProgramId
-        ? {...p, name:programForm.name.trim(), cycleWeeks}
-        : p
-      )}));
+      const updated = await apiUpdateProgram(editProgramId, {name:programForm.name.trim(), cycleWeeks});
+      setPrograms(prev=>({...prev,[uid]:prev[uid].map(p=>p.id===editProgramId?{...p,...updated}:p)}));
       setEditProgramId(null);
     } else {
-      setPrograms(prev=>({...prev,[uid]:[...(prev[uid]||[]),{id:pid, name:programForm.name.trim(), cycleWeeks, cycleStartDate:getMondayOfWeek(today)}]}));
-    }
-    if (programForm.routineIds.length>0) {
-      setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>
-        programForm.routineIds.includes(r.id) ? {...r,programId:pid} : r
-      )}));
+      const created = await apiCreateProgram({
+        userId: uid,
+        name: programForm.name.trim(),
+        cycleWeeks,
+        cycleStartDate: getMondayOfWeek(today),
+      });
+      if (programForm.routineIds.length>0) {
+        for (const rid of programForm.routineIds) {
+          await apiUpdateRoutine(rid, {programId: created.id});
+        }
+        setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>
+          programForm.routineIds.includes(r.id) ? {...r,programId:created.id} : r
+        )}));
+      }
+      setPrograms(prev=>({...prev,[uid]:[...(prev[uid]||[]),created]}));
     }
     setProgramForm({name:"", routineIds:[], cycleActiveWeeks:3, cycleSessionsPerWeek:3, cycleHasRestWeek:true});
     setShowNewProgram(false);
   }
 
-  function deleteProgram(id) {
-    // Detach all routines that belonged to this program
+  async function deleteProgram(id) {
+    const toDetach = (routines[uid]||[]).filter(r=>r.programId===id);
+    for (const r of toDetach) await apiUpdateRoutine(r.id, {programId:""});
+    await apiDeleteProgram(id);
     setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>r.programId===id?{...r,programId:""}:r)}));
     setPrograms(prev=>({...prev,[uid]:prev[uid].filter(p=>p.id!==id)}));
     setConfirmDeleteProgramId(null);
   }
 
-  function deleteRoutine(id) {
+  async function deleteRoutine(id) {
+    await apiDeleteRoutine(id);
     setRoutines(prev=>({...prev,[uid]:prev[uid].filter(r=>r.id!==id)}));
   }
 
-  function archiveRoutine(id) {
+  async function archiveRoutine(id) {
+    await apiUpdateRoutine(id, {archived:true});
     setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>r.id===id?{...r,archived:true}:r)}));
   }
 
-  function unarchiveRoutine(id) {
+  async function unarchiveRoutine(id) {
+    await apiUpdateRoutine(id, {archived:false});
     setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>r.id===id?{...r,archived:false}:r)}));
   }
 
@@ -1077,7 +1280,11 @@ export default function GymBro() {
   const allPlates = unit==="lbs" ? PLATES_LBS : PLATES_KG;
   const barW = unit==="lbs" ? bar.weight : Math.round(bar.weight*0.453592*10)/10;
   function getPairs(p: number): number { return plateInventory[`${unit}-${p}`] ?? 1; }
-  function setPairs(p: number, n: number) { setPlateInventory(prev=>({...prev,[`${unit}-${p}`]:Math.max(0,Math.min(9,n))})); }
+  function setPairs(p: number, n: number) {
+    const newInv = {...plateInventory, [`${unit}-${p}`]: Math.max(0, Math.min(9, n))};
+    setPlateInventory(newInv);
+    saveProfileToAPI({plateInventory: newInv});
+  }
   const availPlates = allPlates.filter(p=>getPairs(p)>0);
   const maxPairsMap = Object.fromEntries(allPlates.map(p=>[p, getPairs(p)]));
   const plateList = calcPlates(targetW, barW, availPlates, maxPairsMap);
@@ -1111,8 +1318,8 @@ export default function GymBro() {
       <div style={S.header}>
         <span style={S.logo}>💪 <span style={{textDecoration:"underline"}}>Gym Bro</span> 💪</span>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{loggedIn.name}</span>
-          <button style={S.btn} onClick={()=>setLoggedIn(null)}>Sign out</button>
+          <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{pb.authStore.record?.email ?? ""}</span>
+          <button style={S.btn} onClick={handleLogout}>Sign out</button>
         </div>
       </div>
 
@@ -1637,7 +1844,7 @@ export default function GymBro() {
               <AddExerciseInline
                 allExercises={fullDB}
                 onAdd={name=>setActiveSession(prev=>({...prev,exercises:[...prev.exercises,{name,sets:[{w:"",r:""}],note:""}]}))}
-                onCreateCustom={newEx=>setCustomExercises(prev=>[...prev,newEx])}
+                onCreateCustom={newEx=>{const arr=[...customExercises,newEx];setCustomExercises(arr);saveProfileToAPI({customExercises:arr});}}
               />
               {/* Session total volume summary */}
               {calcSessionVol(activeSession.exercises) > 0 && (
@@ -1790,8 +1997,8 @@ export default function GymBro() {
                           </div>
                           {/* Bottom row: uniform action buttons */}
                           <div style={{display:"flex",gap:6,flexWrap:"wrap" as const}}>
-                            {!isActive && <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>setActiveProgramId(prog.id)}>Set active</button>}
-                            {prog.cycleWeeks && <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>setPrograms(prev=>({...prev,[uid]:prev[uid].map(p=>p.id===prog.id?{...p,cycleStartDate:getMondayOfWeek(today)}:p)}))}>↺ Reset cycle</button>}
+                            {!isActive && <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{setActiveProgramId(prog.id);saveProfileToAPI({activeProgramId:prog.id});}}>Set active</button>}
+                            {prog.cycleWeeks && <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={async()=>{const d=getMondayOfWeek(today);await apiUpdateProgram(prog.id,{cycleStartDate:d});setPrograms(prev=>({...prev,[uid]:prev[uid].map(p=>p.id===prog.id?{...p,cycleStartDate:d}:p)}));}}>↺ Reset cycle</button>}
                             <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{setEditProgramId(prog.id);setProgramForm({name:prog.name,routineIds:[],cycleActiveWeeks:prog.cycleWeeks?.filter((w:any)=>w.type==="active").length??3,cycleSessionsPerWeek:prog.cycleWeeks?.find((w:any)=>w.type==="active")?.sessions??3,cycleHasRestWeek:prog.cycleWeeks?.some((w:any)=>w.type==="rest")??true});}}>Rename</button>
                             <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{
                               setAddRoutinesProgramId(prog.id);
@@ -1842,8 +2049,9 @@ export default function GymBro() {
                                 </div>
                               )}
                               <div style={{display:"flex",gap:6}}>
-                                <button style={{...S.btnPrimary,flex:1}} onClick={()=>{
+                                <button style={{...S.btnPrimary,flex:1}} onClick={async()=>{
                                   if (addRoutinesSelection.length>0) {
+                                    for (const rid of addRoutinesSelection) await apiUpdateRoutine(rid,{programId:prog.id});
                                     setRoutines(prev=>({...prev,[uid]:prev[uid].map(r=>
                                       addRoutinesSelection.includes(r.id)?{...r,programId:prog.id}:r
                                     )}));
@@ -2011,6 +2219,48 @@ export default function GymBro() {
                   </div>
                 );
               })()}
+
+              {/* ── Starter Templates ── */}
+              <div style={{marginTop:"1.5rem"}}>
+                <button style={{...S.btn,width:"100%",textAlign:"left" as const,display:"flex",justifyContent:"space-between",alignItems:"center"}} onClick={()=>setShowTemplates(v=>!v)}>
+                  <span>📋 Starter templates</span>
+                  <span>{showTemplates?"▲":"▼"}</span>
+                </button>
+                {showTemplates && (
+                  <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:8}}>
+                    {ROUTINE_TEMPLATES.map(t=>{
+                      const alreadyAdded = userRoutines.some(r=>r.name===t.name);
+                      return (
+                        <div key={t.name} style={{...S.card,padding:"12px 14px"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                            <div>
+                              <div style={{fontSize:14,fontWeight:600}}>{t.name}</div>
+                              <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:2}}>{t.tag}</div>
+                            </div>
+                            <button
+                              style={{...S.btnPrimary,fontSize:12,padding:"4px 12px",opacity:alreadyAdded?0.45:1,cursor:alreadyAdded?"default":"pointer"}}
+                              disabled={alreadyAdded}
+                              onClick={async()=>{
+                                if (alreadyAdded) return;
+                                const created = await apiCreateRoutine({userId:uid, name:t.name, exercises:t.exercises, programId:"", archived:false});
+                                setRoutines(prev=>({...prev,[uid]:[...(prev[uid]||[]),created]}));
+                              }}
+                            >{alreadyAdded?"Added ✓":"+ Add"}</button>
+                          </div>
+                          <div style={{display:"flex",flexDirection:"column",gap:2}}>
+                            {t.exercises.map((e,i)=>(
+                              <div key={i} style={{fontSize:12,display:"flex",justifyContent:"space-between",color:"var(--color-text-secondary)"}}>
+                                <span style={{color:"var(--color-text-primary)"}}>{e.name}</span>
+                                <span>{e.sets}×{e.reps}{e.weight>0?` @ ${e.weight} lbs`:""}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
               {/* ── Archive ── */}
               {userRoutines.some(r=>r.archived) && (
@@ -2247,7 +2497,9 @@ export default function GymBro() {
                 <button style={{...S.btnPrimary,flex:1}} onClick={()=>{
                   if (!customForm.name.trim()) return;
                   const newEx = {...customForm, name:customForm.name.trim(), id:`custom-${Date.now()}`, custom:true};
-                  setCustomExercises(prev=>[...prev, newEx]);
+                  const arr = [...customExercises, newEx];
+                  setCustomExercises(arr);
+                  saveProfileToAPI({customExercises:arr});
                   setShowCustomForm(false);
                 }}>Save</button>
                 <button style={S.btn} onClick={()=>setShowCustomForm(false)}>Cancel</button>
@@ -2267,9 +2519,9 @@ export default function GymBro() {
                     <span style={S.tag("var(--color-accent)")}>{ex.muscle}</span>
                     <span style={S.tag("#3B6D11")}>{ex.eq}</span>
                     {ex.custom && (
-                      <button style={{...S.btn,fontSize:11,color:"#A32D2D",padding:"2px 7px"}} onClick={()=>
-                        window.confirm(`Delete "${ex.name}"?`) && setCustomExercises(prev=>prev.filter(e=>e.id!==ex.id))
-                      }>✕</button>
+                      <button style={{...S.btn,fontSize:11,color:"#A32D2D",padding:"2px 7px"}} onClick={()=>{
+                        if(window.confirm(`Delete "${ex.name}"?`)){const arr=customExercises.filter(e=>e.id!==ex.id);setCustomExercises(arr);saveProfileToAPI({customExercises:arr});}
+                      }}>✕</button>
                     )}
                   </div>
                 </div>
@@ -2293,6 +2545,7 @@ export default function GymBro() {
 
         function saveProfile(updates:any) {
           setProfiles(prev=>({...prev,[uid]:{...(prev[uid]||{}),...updates}}));
+          saveProfileToAPI(updates);
         }
         function addWeight() {
           const v = parseFloat(profileWeightInput);
@@ -2322,7 +2575,7 @@ export default function GymBro() {
             <div style={S.card}>
               <div style={{marginBottom:12}}>
                 <div style={S.label}>Name</div>
-                <div style={{fontSize:14}}>{loggedIn.name}</div>
+                <div style={{fontSize:14}}>{pb.authStore.record?.email ?? ""}</div>
               </div>
               <div style={{marginBottom:12}}>
                 <div style={{...S.label,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -2575,68 +2828,32 @@ export default function GymBro() {
             <div style={S.secTitle}>App settings</div>
             <div style={S.card}>
               <div style={S.label}>Theme</div>
-              <select value={theme} onChange={e=>setTheme(e.target.value)} style={{...S.input,marginBottom:16}}>
+              <select value={theme} onChange={e=>{setTheme(e.target.value);saveProfileToAPI({theme:e.target.value});}} style={{...S.input,marginBottom:16}}>
                 {Object.entries(THEMES).map(([k,v])=><option key={k} value={k}>{v.emoji} {v.name}</option>)}
               </select>
               <div style={S.label}>Export my data</div>
               <div style={{display:"flex",gap:8,marginTop:6}}>
-                <button style={S.btn} onClick={()=>exportCSV(userSessions,loggedIn.name)}>Export CSV</button>
-                <button style={S.btn} onClick={()=>exportMD(userSessions,loggedIn.name)}>Export Markdown</button>
+                <button style={S.btn} onClick={()=>exportCSV(userSessions, pb.authStore.record?.email ?? "user")}>Export CSV</button>
+                <button style={S.btn} onClick={()=>exportMD(userSessions, pb.authStore.record?.email ?? "user")}>Export Markdown</button>
               </div>
+              <div style={{...S.label,marginTop:20}}>Migrate from local storage</div>
+              <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:8}}>One-time import of any data saved in this browser before the backend migration.</div>
+              <button style={S.btn} disabled={importing} onClick={async()=>{
+                if (!window.confirm("Import local storage data into your account? This will not overwrite existing cloud records.")) return;
+                setImporting(true);
+                try {
+                  await importFromLocalStorage(uid);
+                  await loadData();
+                  alert("Import complete!");
+                } catch(e:any) {
+                  alert("Import failed: " + (e?.message || e));
+                } finally { setImporting(false); }
+              }}>{importing?"Importing…":"Import from local storage"}</button>
             </div>
           </div>
         );
       })()}
 
-    </div>
-  );
-}
-
-// ─── AUTH SCREEN ──────────────────────────────────────────────────────────
-function AuthScreen({users,setUsers,sessions,setSessions,routines,setRoutines,authMode,setAuthMode,authForm,setAuthForm,authErr,setAuthErr,onLogin,theme,setTheme}) {
-  const S2 = {
-    wrap:{fontFamily:"var(--font-mono)",color:"var(--color-text-primary)",maxWidth:340,margin:"0 auto",padding:"3rem 1.5rem",minHeight:"100dvh"},
-    card:{background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1.5rem"},
-    input:{width:"100%",boxSizing:"border-box",padding:"7px 10px",borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:14,marginBottom:10},
-    btn:{width:"100%",padding:"8px",borderRadius:"var(--border-radius-md)",border:"none",background:"var(--color-accent)",color:"#fff",cursor:"pointer",fontSize:14,fontWeight:500},
-    link:{fontSize:13,color:"var(--color-accent)",cursor:"pointer",textDecoration:"underline"},
-  };
-  function handle() {
-    if (authMode==="login") {
-      const u=users.find(u=>u.name.toLowerCase()===authForm.name.toLowerCase()&&u.password===authForm.password);
-      if (u) onLogin(u); else setAuthErr("Wrong username or password.");
-    } else {
-      if (!authForm.name.trim()||!authForm.password.trim()){setAuthErr("Fill in all fields.");return;}
-      if (users.find(u=>u.name.toLowerCase()===authForm.name.toLowerCase())){setAuthErr("Username taken.");return;}
-      const nu={id:authForm.name.toLowerCase().replace(/\s/g,"_")+Date.now(),name:authForm.name,password:authForm.password};
-      setUsers(p=>[...p,nu]);
-      setSessions(p=>({...p,[nu.id]:[]}));
-      setRoutines(p=>({...p,[nu.id]:[]}));
-      onLogin(nu);
-    }
-  }
-  return (
-    <div style={S2.wrap}>
-      <div style={{fontSize:22,fontWeight:500,marginBottom:"1.5rem",textAlign:"center"}}>Gym Bro</div>
-      <div style={S2.card}>
-        <div style={{fontSize:15,fontWeight:500,marginBottom:14}}>{authMode==="login"?"Sign in":"Create account"}</div>
-        <input value={authForm.name} onChange={e=>setAuthForm(f=>({...f,name:e.target.value}))} placeholder="Username" style={S2.input}/>
-        <input type="password" value={authForm.password} onChange={e=>setAuthForm(f=>({...f,password:e.target.value}))} placeholder="Password" style={S2.input} onKeyDown={e=>e.key==="Enter"&&handle()}/>
-        {authErr && <div style={{color:"#A32D2D",fontSize:13,marginBottom:8}}>{authErr}</div>}
-        <button style={S2.btn} onClick={handle}>{authMode==="login"?"Sign in":"Register"}</button>
-        <div style={{textAlign:"center",marginTop:12}}>
-          {authMode==="login"
-            ?<span style={{fontSize:13}}>No account? <span style={S2.link} onClick={()=>{setAuthMode("register");setAuthErr("");}}>Register</span></span>
-            :<span style={{fontSize:13}}>Have an account? <span style={S2.link} onClick={()=>{setAuthMode("login");setAuthErr("");}}>Sign in</span></span>
-          }
-        </div>
-      </div>
-      <div style={{fontSize:12,color:"var(--color-text-secondary)",textAlign:"center",marginTop:12}}>Demo: username "Alex" password "1234"</div>
-      <div style={{textAlign:"center",marginTop:"1.5rem"}}>
-        <select value={theme} onChange={e=>setTheme(e.target.value)} style={{background:"var(--color-background-secondary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",padding:"4px 8px",fontSize:13,cursor:"pointer"}}>
-          {Object.entries(THEMES).map(([k,v])=><option key={k} value={k}>{v.emoji} {v.name}</option>)}
-        </select>
-      </div>
     </div>
   );
 }

@@ -85,12 +85,20 @@ export function logout() {
 // ─── Fetch all data for a user on login ───────────────────────────────────────
 
 export async function fetchAllUserData(userId: string): Promise<AllUserData> {
-  const filter = `userId="${userId}"`;
+  const filter = pb.filter('userId = {:userId}', { userId });
+
+  const fetchOne = async (name: string, fn: () => Promise<any[]>) => {
+    try { return await fn(); }
+    catch(e: any) {
+      throw new Error(`[${name}] ${e?.status ?? ''} ${e?.message ?? e}`);
+    }
+  };
+
   const [profileList, programs, routines, sessions] = await Promise.all([
-    pb.collection('profiles').getFullList({ filter }),
-    pb.collection('programs').getFullList({ filter, sort: '-created' }),
-    pb.collection('routines').getFullList({ filter }),
-    pb.collection('sessions').getFullList({ filter, sort: '-date,-created', requestKey: null }),
+    fetchOne('profiles', () => pb.collection('profiles').getFullList({ filter })),
+    fetchOne('programs', () => pb.collection('programs').getFullList({ filter, sort: '-id' })),
+    fetchOne('routines', () => pb.collection('routines').getFullList({ filter })),
+    fetchOne('sessions', () => pb.collection('sessions').getFullList({ filter, sort: '-date,-id', requestKey: null })),
   ]);
   return {
     profile: (profileList[0] as unknown as GymProfile) ?? null,
