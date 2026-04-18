@@ -341,6 +341,9 @@ const DB = [
   // Back & Posterior Chain
   {id:286,name:"Good Morning (Bodyweight)",muscle:"Hamstrings",eq:"No Equipment",type:"Compound"},
   {id:287,name:"Reverse Hyperextension",muscle:"Glutes",eq:"No Equipment",type:"Isolation"},
+  {id:288,name:"Smith Machine Split Squat",muscle:"Quads",eq:"Smith Machine",type:"Compound"},
+  {id:289,name:"Smith Machine Incline Bench",muscle:"Chest",eq:"Smith Machine",type:"Compound"},
+  {id:290,name:"Smith Machine Shrug",muscle:"Traps",eq:"Smith Machine",type:"Isolation"},
 ];
 
 const EQ_TYPES = ["All", "Barbell", "EZ Bar", "Smith Machine", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell", "Rings", "Bands", "Swiss Ball", "Trap Bar", "Landmine", "Medicine Ball", "TRX", "No Equipment"];
