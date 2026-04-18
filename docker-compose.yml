@@ -1,0 +1,47 @@
+services:
+
+  # ── Frontend (React + nginx) ────────────────────────────────────────────────
+  frontend:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+    networks:
+      - gymbro
+
+    # Direct access (no external proxy) — comment out if using Traefik/nginx
+    ports:
+      - "80:80"
+
+    # ── Traefik labels (uncomment to use instead of ports above) ──────────────
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.gymbro.rule=Host(`gymbro.yourdomain.com`)"
+    #   - "traefik.http.routers.gymbro.entrypoints=websecure"
+    #   - "traefik.http.routers.gymbro.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.gymbro.loadbalancer.server.port=80"
+
+  # ── PocketBase ──────────────────────────────────────────────────────────────
+  pocketbase:
+    image: ghcr.io/muchobien/pocketbase:latest
+    restart: unless-stopped
+    volumes:
+      - ./pb_data:/pb/pb_data           # persistent data (never commit this)
+      - ./pb_migrations:/pb/pb_migrations # schema migrations (committed)
+    networks:
+      - gymbro
+    # Not exposed to host — only reachable within the gymbro Docker network
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8090/api/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  gymbro:
+    name: gymbro
+    # If Traefik runs on an external Docker network, replace the block above with:
+    # gymbro:
+    #   external: true
+    #   name: traefik          # match your Traefik network name
