@@ -355,6 +355,14 @@ const DB = [
   {id:299,name:"Smith Machine Lunge",muscle:"Quads",eq:"Smith Machine",type:"Compound"},
   {id:300,name:"Smith Machine Reverse Lunge",muscle:"Quads",eq:"Smith Machine",type:"Compound"},
   {id:301,name:"Smith Machine Upright Row",muscle:"Traps",eq:"Smith Machine",type:"Compound"},
+  // ── Barbell additions ─────────────────────────────────────────────────────
+  {id:302,name:"Barbell Shoulder Press",muscle:"Shoulders",eq:"Barbell",type:"Compound"},
+  {id:303,name:"Seated Overhead Press",muscle:"Shoulders",eq:"Barbell",type:"Compound"},
+  {id:304,name:"Close Grip Bench Press",muscle:"Triceps",eq:"Barbell",type:"Compound"},
+  {id:305,name:"Barbell Upright Row",muscle:"Traps",eq:"Barbell",type:"Compound"},
+  {id:306,name:"Stiff Leg Deadlift",muscle:"Hamstrings",eq:"Barbell",type:"Compound"},
+  {id:307,name:"Barbell Reverse Lunge",muscle:"Quads",eq:"Barbell",type:"Compound"},
+  {id:308,name:"Power Clean",muscle:"Back",eq:"Barbell",type:"Compound"},
 ];
 
 const EQ_TYPES = ["All", "Barbell", "EZ Bar", "Smith Machine", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell", "Rings", "Bands", "Swiss Ball", "Trap Bar", "Landmine", "Medicine Ball", "TRX", "No Equipment"];
