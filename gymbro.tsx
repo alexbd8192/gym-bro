@@ -344,6 +344,17 @@ const DB = [
   {id:288,name:"Smith Machine Split Squat",muscle:"Quads",eq:"Smith Machine",type:"Compound"},
   {id:289,name:"Smith Machine Incline Bench",muscle:"Chest",eq:"Smith Machine",type:"Compound"},
   {id:290,name:"Smith Machine Shrug",muscle:"Traps",eq:"Smith Machine",type:"Isolation"},
+  {id:291,name:"Smith Machine Back Squat",muscle:"Quads",eq:"Smith Machine",type:"Compound"},
+  {id:292,name:"Smith Machine Front Squat",muscle:"Quads",eq:"Smith Machine",type:"Compound"},
+  {id:293,name:"Smith Machine Sumo Squat",muscle:"Glutes",eq:"Smith Machine",type:"Compound"},
+  {id:294,name:"Smith Machine Romanian Deadlift",muscle:"Hamstrings",eq:"Smith Machine",type:"Compound"},
+  {id:295,name:"Smith Machine Deadlift",muscle:"Back",eq:"Smith Machine",type:"Compound"},
+  {id:296,name:"Smith Machine Good Morning",muscle:"Hamstrings",eq:"Smith Machine",type:"Compound"},
+  {id:297,name:"Smith Machine Decline Bench",muscle:"Chest",eq:"Smith Machine",type:"Compound"},
+  {id:298,name:"Smith Machine Close Grip Bench",muscle:"Triceps",eq:"Smith Machine",type:"Compound"},
+  {id:299,name:"Smith Machine Lunge",muscle:"Quads",eq:"Smith Machine",type:"Compound"},
+  {id:300,name:"Smith Machine Reverse Lunge",muscle:"Quads",eq:"Smith Machine",type:"Compound"},
+  {id:301,name:"Smith Machine Upright Row",muscle:"Traps",eq:"Smith Machine",type:"Compound"},
 ];
 
 const EQ_TYPES = ["All", "Barbell", "EZ Bar", "Smith Machine", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell", "Rings", "Bands", "Swiss Ball", "Trap Bar", "Landmine", "Medicine Ball", "TRX", "No Equipment"];
