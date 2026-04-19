@@ -872,6 +872,10 @@ export default function GymBro() {
   const [showRestForm, setShowRestForm] = useState(false);
   const [restForm, setRestForm] = useState({date:today,notes:""});
   const [confirmDeleteSessionId, setConfirmDeleteSessionId] = useState<string|null>(null);
+  const [editRestCardioId, setEditRestCardioId] = useState<string|null>(null);
+  const [editRestCardioForm, setEditRestCardioForm] = useState<any>({});
+  const [editStartDateProgramId, setEditStartDateProgramId] = useState<string|null>(null);
+  const [editStartDateValue, setEditStartDateValue] = useState("");
 
   // ── Rest timer (used during active session) ──
   const [restDuration, setRestDuration] = useState(120);         // configured duration in seconds
@@ -1337,10 +1341,10 @@ export default function GymBro() {
 
   return (
     <div style={S.wrap}>
-      <div style={S.header}>
+      <div style={{...S.header,flexDirection:"column",alignItems:"center",gap:4}}>
         <span style={S.logo}>💪 <span style={{textDecoration:"underline"}}>Gym Bro</span> 💪</span>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{pb.authStore.record?.email ?? ""}</span>
+          <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{pb.authStore.record?.email ?? ""}</span>
           <button style={S.btn} onClick={handleLogout}>Sign out</button>
         </div>
       </div>
@@ -1646,6 +1650,7 @@ export default function GymBro() {
                       <div style={{display:"flex",gap:6,alignItems:"center"}}>
                         <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{s.date}</span>
                         {(!s.type || s.type==="strength") && <button style={S.btn} onClick={e=>{e.stopPropagation();editSession(s);}}>Edit</button>}
+                        {(s.type==="cardio"||s.type==="rest") && <button style={S.btn} onClick={e=>{e.stopPropagation();setEditRestCardioId(s.id);setEditRestCardioForm({notes:s.notes||"",durationMins:s.durationMins||"",distance:s.distance||"",distanceUnit:s.distanceUnit||"km",activity:s.activity||""});setSelectedSessionId(s.id);}}>Edit</button>}
                         {isConfirmDelete
                           ? <>
                               <button style={{...S.btn,color:"var(--color-error,#e05)"}} onClick={e=>{e.stopPropagation();deleteSession(s.id);}}>Confirm</button>
@@ -1659,17 +1664,55 @@ export default function GymBro() {
                     {!isOpen && s.type==="cardio" && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{s.notes||"Cardio session"}</div>}
                     {!isOpen && s.type==="rest" && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{s.notes||"Planned rest day"}</div>}
                     {!isOpen && (!s.type||s.type==="strength") && <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{(s.exercises||[]).map((e:any)=>e.name).join(", ")}</div>}
-                    {isOpen && s.type==="cardio" && (
+                    {isOpen && s.type==="cardio" && (editRestCardioId===s.id ? (
+                      <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}} onClick={e=>e.stopPropagation()}>
+                        <div style={{display:"flex",gap:6,marginBottom:6}}>
+                          <div style={{flex:2}}><div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Activity</div>
+                            <input value={editRestCardioForm.activity} style={{...S.sm,width:"100%"}} onChange={e=>setEditRestCardioForm(f=>({...f,activity:e.target.value}))}/>
+                          </div>
+                          <div style={{flex:1}}><div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Duration (min)</div>
+                            <input type="number" value={editRestCardioForm.durationMins} style={{...S.sm,width:"100%"}} onChange={e=>setEditRestCardioForm(f=>({...f,durationMins:e.target.value}))}/>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:6,marginBottom:6}}>
+                          <div style={{flex:2}}><div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Distance</div>
+                            <input type="number" value={editRestCardioForm.distance} style={{...S.sm,width:"100%"}} onChange={e=>setEditRestCardioForm(f=>({...f,distance:e.target.value}))}/>
+                          </div>
+                          <div style={{flex:1}}><div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Unit</div>
+                            <select value={editRestCardioForm.distanceUnit} style={{...S.sm,width:"100%"}} onChange={e=>setEditRestCardioForm(f=>({...f,distanceUnit:e.target.value}))}>
+                              <option>km</option><option>mi</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div style={{marginBottom:8}}><div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Notes</div>
+                          <input value={editRestCardioForm.notes} style={{...S.sm,width:"100%"}} onChange={e=>setEditRestCardioForm(f=>({...f,notes:e.target.value}))}/>
+                        </div>
+                        <div style={{display:"flex",gap:6}}>
+                          <button style={S.btnPrimary} onClick={async()=>{const upd=await apiUpdateSession(s.id,{activity:editRestCardioForm.activity,durationMins:Number(editRestCardioForm.durationMins),distance:editRestCardioForm.distance?Number(editRestCardioForm.distance):undefined,distanceUnit:editRestCardioForm.distanceUnit,notes:editRestCardioForm.notes});setSessions(prev=>({...prev,[uid]:prev[uid].map(x=>x.id===s.id?{...x,...upd}:x)}));setEditRestCardioId(null);}}>Save</button>
+                          <button style={S.btn} onClick={()=>setEditRestCardioId(null)}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
                       <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8,fontSize:12,color:"var(--color-text-secondary)"}}>
                         <div>{s.durationMins} min{s.distance ? ` · ${s.distance} ${s.distanceUnit}` : ""}</div>
                         {s.notes && <div style={{marginTop:4,fontStyle:"italic"}}>📝 {s.notes}</div>}
                       </div>
-                    )}
-                    {isOpen && s.type==="rest" && (
+                    ))}
+                    {isOpen && s.type==="rest" && (editRestCardioId===s.id ? (
+                      <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}} onClick={e=>e.stopPropagation()}>
+                        <div style={{marginBottom:8}}><div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Notes</div>
+                          <input value={editRestCardioForm.notes} style={{...S.sm,width:"100%"}} onChange={e=>setEditRestCardioForm(f=>({...f,notes:e.target.value}))}/>
+                        </div>
+                        <div style={{display:"flex",gap:6}}>
+                          <button style={S.btnPrimary} onClick={async()=>{const upd=await apiUpdateSession(s.id,{notes:editRestCardioForm.notes});setSessions(prev=>({...prev,[uid]:prev[uid].map(x=>x.id===s.id?{...x,...upd}:x)}));setEditRestCardioId(null);}}>Save</button>
+                          <button style={S.btn} onClick={()=>setEditRestCardioId(null)}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
                       <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8,fontSize:12,color:"var(--color-text-secondary)"}}>
                         {s.notes ? <div style={{fontStyle:"italic"}}>📝 {s.notes}</div> : <div>Planned rest day</div>}
                       </div>
-                    )}
+                    ))}
                     {isOpen && (!s.type||s.type==="strength") && (
                       <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
                         {(s.exercises||[]).map((ex:any,j:number)=>(
@@ -2021,6 +2064,15 @@ export default function GymBro() {
                           <div style={{display:"flex",gap:6,flexWrap:"wrap" as const}}>
                             {!isActive && <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{setActiveProgramId(prog.id);saveProfileToAPI({activeProgramId:prog.id});}}>Set active</button>}
                             {prog.cycleWeeks && <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={async()=>{const d=getMondayOfWeek(today);await apiUpdateProgram(prog.id,{cycleStartDate:d});setPrograms(prev=>({...prev,[uid]:prev[uid].map(p=>p.id===prog.id?{...p,cycleStartDate:d}:p)}));}}>↺ Reset cycle</button>}
+                            {prog.cycleWeeks && editStartDateProgramId===prog.id ? (
+                              <>
+                                <input type="date" value={editStartDateValue} style={{...S.sm,width:140}} onChange={e=>setEditStartDateValue(e.target.value)}/>
+                                <button style={{...S.btnPrimary,fontSize:12,padding:"5px 12px"}} onClick={async()=>{if(!editStartDateValue)return;await apiUpdateProgram(prog.id,{cycleStartDate:editStartDateValue});setPrograms(prev=>({...prev,[uid]:prev[uid].map(p=>p.id===prog.id?{...p,cycleStartDate:editStartDateValue}:p)}));setEditStartDateProgramId(null);}}>Apply</button>
+                                <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>setEditStartDateProgramId(null)}>Cancel</button>
+                              </>
+                            ) : (
+                              prog.cycleWeeks && <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{setEditStartDateProgramId(prog.id);setEditStartDateValue(prog.cycleStartDate||today);}}>📅 Start date</button>
+                            )}
                             <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{setEditProgramId(prog.id);setProgramForm({name:prog.name,routineIds:[],cycleActiveWeeks:prog.cycleWeeks?.filter((w:any)=>w.type==="active").length??3,cycleSessionsPerWeek:prog.cycleWeeks?.find((w:any)=>w.type==="active")?.sessions??3,cycleHasRestWeek:prog.cycleWeeks?.some((w:any)=>w.type==="rest")??true});}}>Rename</button>
                             <button style={{...S.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{
                               setAddRoutinesProgramId(prog.id);
@@ -2333,9 +2385,13 @@ export default function GymBro() {
               <div style={{...S.secTitle,marginTop:"1.5rem",fontSize:11,letterSpacing:"0.08em"}}>Exercises</div>
               {routineForm.exercises.map((ex,i)=>(
                 <div key={i} style={{...S.cardSec,marginBottom:6}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                     <span style={{fontSize:13,fontWeight:500}}>{ex.name}</span>
-                    <button style={{...S.btn,padding:"2px 8px",fontSize:11}} onClick={()=>setRoutineForm(f=>({...f,exercises:f.exercises.filter((_,j)=>j!==i)}))}>Remove</button>
+                    <div style={{display:"flex",gap:3}}>
+                      <button style={{...S.btn,padding:"2px 6px",fontSize:11}} disabled={i===0} onClick={()=>setRoutineForm(f=>{const a=[...f.exercises];[a[i-1],a[i]]=[a[i],a[i-1]];return{...f,exercises:a};})}>▲</button>
+                      <button style={{...S.btn,padding:"2px 6px",fontSize:11}} disabled={i===routineForm.exercises.length-1} onClick={()=>setRoutineForm(f=>{const a=[...f.exercises];[a[i],a[i+1]]=[a[i+1],a[i]];return{...f,exercises:a};})}>▼</button>
+                      <button style={{...S.btn,padding:"2px 8px",fontSize:11}} onClick={()=>setRoutineForm(f=>({...f,exercises:f.exercises.filter((_,j)=>j!==i)}))}>Remove</button>
+                    </div>
                   </div>
                   <div style={{display:"flex",gap:6}}>
                     <div style={{flex:1}}><div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Sets</div>
@@ -2347,6 +2403,9 @@ export default function GymBro() {
                     <div style={{flex:1}}><div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Weight (lbs)</div>
                       <input value={ex.weight} style={{...S.sm,width:"100%"}} onChange={e=>setRoutineForm(f=>({...f,exercises:f.exercises.map((x,j)=>j===i?{...x,weight:e.target.value}:x)}))}/>
                     </div>
+                  </div>
+                  <div style={{marginTop:6}}><div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Notes</div>
+                    <input value={ex.note||""} placeholder="e.g. keep elbows tucked" style={{...S.sm,width:"100%"}} onChange={e=>setRoutineForm(f=>({...f,exercises:f.exercises.map((x,j)=>j===i?{...x,note:e.target.value}:x)}))}/>
                   </div>
                 </div>
               ))}
@@ -2858,19 +2917,6 @@ export default function GymBro() {
                 <button style={S.btn} onClick={()=>exportCSV(userSessions, pb.authStore.record?.email ?? "user")}>Export CSV</button>
                 <button style={S.btn} onClick={()=>exportMD(userSessions, pb.authStore.record?.email ?? "user")}>Export Markdown</button>
               </div>
-              <div style={{...S.label,marginTop:20}}>Migrate from local storage</div>
-              <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:8}}>One-time import of any data saved in this browser before the backend migration.</div>
-              <button style={S.btn} disabled={importing} onClick={async()=>{
-                if (!window.confirm("Import local storage data into your account? This will not overwrite existing cloud records.")) return;
-                setImporting(true);
-                try {
-                  await importFromLocalStorage(uid);
-                  await loadData();
-                  alert("Import complete!");
-                } catch(e:any) {
-                  alert("Import failed: " + (e?.message || e));
-                } finally { setImporting(false); }
-              }}>{importing?"Importing…":"Import from local storage"}</button>
             </div>
           </div>
         );
