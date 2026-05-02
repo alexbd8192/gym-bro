@@ -898,6 +898,8 @@ export default function GymBro() {
   // ── Dashboard UI state ──
   const [selectedSessionId, setSelectedSessionId] = useState(null); // expanded session card
   const [e1rmTooltip, setE1rmTooltip] = useState(false);            // info popup for e1RM explanation
+  const [progressSearch, setProgressSearch] = useState("");
+  const [progressSort, setProgressSort] = useState<"name"|"weight"|"recent"|"gain">("weight");
 
   // ── Routines UI state ──
   const [showArchived, setShowArchived] = useState(false);       // toggle archived routines visibility
@@ -1973,33 +1975,73 @@ export default function GymBro() {
       {tab==="progress" && (
         <div>
           <div style={S.secTitle}>Exercise progression</div>
+          {/* ── Search + Sort controls ── */}
+          <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center"}}>
+            <input
+              value={progressSearch}
+              onChange={e=>setProgressSearch(e.target.value)}
+              placeholder="Search exercise…"
+              style={{...S.input,flex:1,marginBottom:0}}
+            />
+            <select
+              value={progressSort}
+              onChange={e=>setProgressSort(e.target.value as any)}
+              style={{...S.input,marginBottom:0,width:"auto",flexShrink:0}}
+            >
+              <option value="weight">Weight ↓</option>
+              <option value="recent">Recent first</option>
+              <option value="gain">Gain %</option>
+              <option value="name">A → Z</option>
+            </select>
+          </div>
           {Object.keys(prs).length===0 && <div style={{fontSize:13,color:"var(--color-text-secondary)"}}>No sessions logged yet.</div>}
-          {Object.entries(prs).map(([ex,pr])=>{
-            const history = getLastTwo(userSessions,ex);
-            const cur=history[0], prev=history[1];
-            const pct = prev ? Math.round(((cur.best-prev.best)/prev.best)*100) : null;
-            const up = pct!==null&&pct>=0;
-            return (
-              <div key={ex} style={S.card}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                  <span style={{fontSize:14,fontWeight:500}}>{ex}</span>
-                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                    {pct!==null && (
-                      <span style={{fontSize:13,fontWeight:500,color:up?"#3B6D11":"#A32D2D"}}>
-                        {up?"↑":"↓"} {Math.abs(pct)}%{pct>=3?" ❤️":""}
-                      </span>
-                    )}
-                    <span style={S.prBadge}>PR {pr.w} lbs</span>
+          {(()=>{
+            let entries = Object.entries(prs) as [string,any][];
+            // filter
+            if (progressSearch.trim()) {
+              const q = progressSearch.toLowerCase();
+              entries = entries.filter(([ex])=>ex.toLowerCase().includes(q));
+            }
+            // sort
+            entries.sort(([exA,prA],[exB,prB])=>{
+              if (progressSort==="name") return exA.localeCompare(exB);
+              if (progressSort==="weight") return parseFloat(prB.w)-parseFloat(prA.w);
+              if (progressSort==="recent") return prB.date.localeCompare(prA.date);
+              if (progressSort==="gain") {
+                const histA=getLastTwo(userSessions,exA), histB=getLastTwo(userSessions,exB);
+                const pctA=histA[1]?((histA[0].best-histA[1].best)/histA[1].best):0;
+                const pctB=histB[1]?((histB[0].best-histB[1].best)/histB[1].best):0;
+                return pctB-pctA;
+              }
+              return 0;
+            });
+            return entries.map(([ex,pr])=>{
+              const history = getLastTwo(userSessions,ex);
+              const cur=history[0], prev=history[1];
+              const pct = prev ? Math.round(((cur.best-prev.best)/prev.best)*100) : null;
+              const up = pct!==null&&pct>=0;
+              return (
+                <div key={ex} style={S.card}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                    <span style={{fontSize:14,fontWeight:500}}>{ex}</span>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                      {pct!==null && (
+                        <span style={{fontSize:13,fontWeight:500,color:up?"#3B6D11":"#A32D2D"}}>
+                          {up?"↑":"↓"} {Math.abs(pct)}%{pct>=3?" ❤️":""}
+                        </span>
+                      )}
+                      <span style={S.prBadge}>PR {pr.w} lbs</span>
+                    </div>
                   </div>
+                  <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:6}}>
+                    {cur && <span>Last: <strong style={{color:"var(--color-text-primary)"}}>{cur.best} lbs</strong> on {cur.date}</span>}
+                    {prev && <span>  ·  Before: {prev.best} lbs on {prev.date}</span>}
+                  </div>
+                  <ProgressBar sessions={userSessions} exName={ex}/>
                 </div>
-                <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:6}}>
-                  {cur && <span>Last: <strong style={{color:"var(--color-text-primary)"}}>{cur.best} lbs</strong> on {cur.date}</span>}
-                  {prev && <span>  ·  Before: {prev.best} lbs on {prev.date}</span>}
-                </div>
-                <ProgressBar sessions={userSessions} exName={ex}/>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       )}
 
