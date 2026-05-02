@@ -1673,7 +1673,7 @@ export default function GymBro() {
                             if(s.comment) lines.push(`Note: ${s.comment}`);
                           }
                           navigator.clipboard.writeText(lines.join("\n"));
-                        }}>📋</button>
+                        }}>📋 Copy</button>
                         {isConfirmDelete
                           ? <>
                               <button style={{...S.btn,color:"var(--color-error,#e05)"}} onClick={e=>{e.stopPropagation();deleteSession(s.id);}}>Confirm</button>
