@@ -1651,6 +1651,29 @@ export default function GymBro() {
                         <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{s.date}</span>
                         {(!s.type || s.type==="strength") && <button style={S.btn} onClick={e=>{e.stopPropagation();editSession(s);}}>Edit</button>}
                         {(s.type==="cardio"||s.type==="rest") && <button style={S.btn} onClick={e=>{e.stopPropagation();setEditRestCardioId(s.id);setEditRestCardioForm({notes:s.notes||"",durationMins:s.durationMins||"",distance:s.distance||"",distanceUnit:s.distanceUnit||"km",activity:s.activity||""});setSelectedSessionId(s.id);}}>Edit</button>}
+                        <button style={S.btn} onClick={e=>{e.stopPropagation();
+                          const lines:string[]=[];
+                          const icon=s.type==="cardio"?"🏃":s.type==="rest"?"😴":"🏋️";
+                          lines.push(`${icon} ${s.routineName} — ${s.date}`);
+                          lines.push("─".repeat(30));
+                          if(s.type==="cardio"){
+                            lines.push(`Activity: ${s.activity||"Cardio"}`);
+                            lines.push(`Duration: ${s.durationMins} min`);
+                            if(s.distance) lines.push(`Distance: ${s.distance} ${s.distanceUnit}`);
+                            if(s.notes) lines.push(`Notes: ${s.notes}`);
+                          } else if(s.type==="rest"){
+                            lines.push(s.notes||"Planned rest day");
+                          } else {
+                            (s.exercises||[]).forEach((ex:any)=>{
+                              lines.push("");
+                              lines.push(ex.name+(ex.note?` (${ex.note})`:""));
+                              (ex.sets||[]).forEach((st:any,k:number)=>lines.push(`  Set ${k+1}: ${st.w} lbs × ${st.r}`));
+                            });
+                            if(s.duration) lines.push(`\nDuration: ${fmtDuration(s.duration)}`);
+                            if(s.comment) lines.push(`Note: ${s.comment}`);
+                          }
+                          navigator.clipboard.writeText(lines.join("\n"));
+                        }}>📋</button>
                         {isConfirmDelete
                           ? <>
                               <button style={{...S.btn,color:"var(--color-error,#e05)"}} onClick={e=>{e.stopPropagation();deleteSession(s.id);}}>Confirm</button>
@@ -2412,7 +2435,7 @@ export default function GymBro() {
               <div style={S.label}>Search & add exercise</div>
               <input value={routineExSearch} onChange={e=>setRoutineExSearch(e.target.value)} placeholder="Search exercises..." style={{...S.input,marginBottom:6}}/>
               <div style={{maxHeight:160,overflowY:"auto",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-md)"}}>
-                {DB.filter(e=>e.name.toLowerCase().includes(routineExSearch.toLowerCase())).map(e=>(
+                {fullDB.filter(e=>e.name.toLowerCase().includes(routineExSearch.toLowerCase())).map(e=>(
                   <div key={e.id} style={{padding:"6px 10px",fontSize:13,cursor:"pointer",borderBottom:"0.5px solid var(--color-border-tertiary)"}} onClick={()=>setRoutineForm(f=>({...f,exercises:[...f.exercises,{name:e.name,sets:3,reps:"8",weight:""}]}))}>
                     {e.name} <span style={{color:"var(--color-text-secondary)",fontSize:11}}>{e.eq} · {e.muscle}</span>
                   </div>
