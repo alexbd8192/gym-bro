@@ -754,7 +754,7 @@ function getCycleWeekIndex(cycleStartDate:string, cycleLen:number):number {
   const start = new Date(cycleStartDate+"T12:00:00");
   const now = new Date(today+"T12:00:00");
   const weeks = Math.floor((now.getTime()-start.getTime())/(7*24*60*60*1000));
-  return weeks % cycleLen;
+  return ((weeks % cycleLen) + cycleLen) % cycleLen; // handles negative (future start date)
 }
 
 // Count sessions for a program's routines in the calendar week starting on `weekMonday`
